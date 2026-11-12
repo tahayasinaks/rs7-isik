@@ -1,43 +1,44 @@
-# RS7 Işık
+# RS7 Işık — Rust 0.3.0
 
-ATK RS7 Air için Türkçe aydınlatma uygulaması. Windows EXE ve yerel Chrome/Edge sürümleri; tasarım geçicidir. ATK ile bağlantılı resmî bir proje değildir.
+ATK RS7 Air için Türkçe, yerel Windows aydınlatma uygulaması. Arayüz, USB/HID gönderimi, efekt motoru ve tuş dinleme kodu Rust ile yazılmıştır. Electron, JavaScript, .NET veya ayrı yardımcı uygulama gerektirmez. Windows sistem DLL’lerini kullanır.
 
-**Durum:** İlk web sürümünün klavyede çalıştığı kullanıcı tarafından doğrulandı. Windows EXE ve yeni tuşa tepki modu ayrıca fiziksel test gerektirir.
+## Kullanım
 
-## Windows uygulaması
+`RS7-Isik-Rust-0.3.0.exe` dosyasını açın. Önce eski RS7 Işık uygulamasını ve ATK HUB’ı tamamen kapatın. **Klavyeyi bağla → mod seç → Başlat** sırasını izleyin.
 
-`RS7-Isik-0.2.0-Windows-x64.zip` dosyasını çıkarıp içindeki `RS7 Işık.exe` uygulamasını açın. EXE ile yanındaki kaynak ve DLL dosyaları aynı klasörde kalmalıdır; kurulum gerekmez. Node.js veya ayrı tarayıcı kurulumu gerektirmez. Dijital imzası yoktur. EXE açıldığında Klavyeyi bağla → Tuşa basınca dalga → Klavyede başlat sırasını izleyin.
+- **Hız:** 0.20×–3.00×; çalışan efekte anında uygulanır.
+- **Parlaklık:** %0–100.
+- **Renk düzeni:** Gökkuşağı, Tek renk veya İki renk geçişi.
+- **1. renk / 2. renk:** Windows renk seçicisini açar. Renk seçimi özel renk düzenini otomatik etkinleştirir. Sabit renk modu birinci rengi kullanır.
+- **Tuşa basınca dalga:** basılan tuştan yayılıp sönen, üst üste binebilen renkli halkalar.
+- **Küçültme:** USB iş parçacığı çalışmaya devam eder.
+- **X ile çıkış:** efekt gönderimini durdurur, son bir siyah kare gönderir, USB bağlantısını kapatır ve iş parçacığının bitmesini bekler. Kapatma komutu başarısız olursa hata gösterir. Firmware 2.02 üzerindeki fiziksel testte kullanıcı, klavyenin orijinal ATK aydınlatmasına geri döndüğünü doğruladı.
 
-Bu modda bastığınız tuştan renkli halka yayılır ve söner. Aynı anda birden çok halka desteklenir. Windows tuş dinleyicisi yalnızca tuşa tepki modu çalışırken açılır; mod değiştirince, durdurunca, USB çıkarılınca veya uygulama kapanınca kapanır. Tuşlar diske kaydedilmez ve ağ üzerinden gönderilmez. Fiziksel tarama kodu kullanılır; Windows yazı dilinden bağımsızdır. Diğer bağlı klavyeler de tetikleyebilir; Fn algılanmaz. Uygulama açıkken diğer pencerelerde de çalışır.
+Özel efektler bilgisayarda hesaplanır. Uygulama tamamen kapalıyken özel animasyon devam etmez; klavye firmware’ine efekt yüklenmez. Fn algılanmaz. Windows fiziksel tuş olayları kullanıldığı için başka klavyeler de tetikleyebilir. Tuşlar diske yazılmaz veya internete gönderilmez. Yönetici olarak çalışan bazı uygulamalarda Windows erişim sınırları nedeniyle tuş algılama çalışmayabilir.
 
-Kaynak koddan Windows üzerinde: `npm ci`, `npm run desktop`; EXE üretmek için `npm run dist:win`. Yardımcı program Windows .NET Framework C# derleyicisi ile oluşturulur. Windows yürütme ilkeleri değiştirilmez.
+## Mimari
 
-## Tarayıcıda çalıştırma
+`src/lighting.rs`: efekt, hız, palet ve parlaklık hesaplamaları; fiziksel tuş eşlemesi.
 
-Node.js 22 veya üzeri ile bu klasörde `npm start` çalıştırın. Chrome veya Edge ile <http://127.0.0.1:4177> adresini açın. Bağımlılık kurulumu gerekmez.
+`src/hardware.rs`: yalnızca RS7 Air’in doğrulanan USB kimlikleri ve `ff60/61` arabirimi; sürüm okuma ve RGB paketleri.
 
-1. Klavyeyi USB ile bağlayın, ATK HUB ve diğer RGB uygulamalarını kapatın.
-2. **Klavyeyi bağla** ile tarayıcının cihaz seçicisinden RS7 Air’i seçin.
-3. Firmware sürümü okunursa **Klavyede başlat** düğmesine basın.
-4. Işık modu ve parlaklığı değiştirin.
-5. **Durdur ve ışıkları kapat**, LED’lere siyah gönderir. **Bağlantıyı kes** de önce siyah gönderir, ardından HID bağlantısını kapatır.
+`src/worker.rs`: 60 kare/sn hedefleyen, mutlak zamanla çalışan tek USB sahibi. Gecikmiş kareler biriktirilmez. Ayarlar en son değer olarak okunur; tuş kuyruğu sınırlıdır. Arayüz çizimi USB döngüsünü sürmez.
 
-Uygulama açıkken efektler bilgisayarda hesaplanır. Klavye belleğine yeni firmware/kalıcı efekt kurulmaz. Sekme kapanınca veya arka planda kalınca animasyon durabilir; son renk cihazda kalabilir. Önceki ATK aydınlatma ayarı otomatik geri yüklenmez. ATK HUB üzerinden yeniden seçilebilir.
+`src/win_ui.rs`: doğrudan Windows kontrolleri, renk seçicisi, önizleme ve Rust içindeki düşük seviyeli tuş kancası.
 
-## Efektler
+## Derleme
 
-Tuşa basınca dalga, Sürekli dalga, Çapraz dalga, Gökkuşağı, Aurora, Ateş, Yağmur, Yıldızlar, Nefes, Sabit renk ve Kapalı. Parlaklık %0–100 aralığında gönderilen RGB renklerine uygulanır. Renk seçimi Nefes/Sabit renk için geçerlidir. Tarayıcı sürümünde tuşa tepki yalnızca sayfa odaktayken çalışır.
+Windows ve Rust stable ile:
 
-## Geliştirme
+```text
+cargo test --locked
+cargo build --release --locked
+```
 
-`npm test` efektler, paket bölme, matris sırası ve cihaz doğrulama kontrollerini çalıştırır. `.github/workflows/check.yml` aynı kontrolleri GitHub Actions üzerinde çalıştırmaya hazırdır.
+MSVC hedefi Windows SDK/Visual C++ build araçlarını; GNU hedefi uygun GNU bağlama araçlarını gerektirir. EXE: `target/release/rs7-isik.exe`. Çalıştırmak için Rust kurulması gerekmez.
 
-- `desktop/`: Electron kabuğu, dar kapsamlı IPC ve Windows tuş dinleyicisi
-- `src/reactive.js`: fiziksel tuş/LED eşlemesi ve sınırlı halka kuyruğu
-- `src/effects.js`: donanımdan bağımsız efekt motoru
-- `src/protocol.js`: RS7 Air filtreleri ve RGB paketleri
-- `src/device.js`: WebHID bağlantısı ve sıralı gönderim
-- `docs/ARASTIRMA.md`: kaynaklar, doğrulanan bulgular ve açık noktalar
-- `docs/YOL-HARITASI.md`: geliştirme ve yayın işleri
+## Doğrulama
 
-ANSI model hedeflenir. ISO varyantı ayrı matris doğrulaması gerektirdiği için bağlanma listesine alınmadı. USB kimliği listede bulunmayan cihazlara komut gönderilmez.
+Hızın halka yarıçapına etkisi, özel renk ve parlaklık, halka yayılımı/sönmesi, tuş koordinatları, firmware yanıtı ve paket bölme için 6 Rust testi vardır. Firmware 2.02 ve USB `373b:1220` kullanan RS7 Air’e yerel uygulamadan bağlantı kuruldu ve gönderim döngüsü çalıştırıldı. Kullanıcı, X ile kapanıştan sonra orijinal ATK aydınlatmasının geri geldiğini doğruladı. Diğer firmware sürümleri için aynı davranış henüz doğrulanmadı.
+
+Eski Electron sürümü kaynakları geçmişe uyumluluk için depoda durur; Rust EXE bunları kullanmaz. Önceki geliştirme notları: `docs/LEGACY-ELECTRON.md`. Proje ATK ile bağlantılı resmî bir ürün değildir. EXE dijital imzalı değildir.
