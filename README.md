@@ -1,10 +1,10 @@
-# RS7 Işık — v1.0.0
+# RS7 Işık — v1.0.1
 
 ATK RS7 Air için Türkçe, yerel Windows aydınlatma uygulaması. Arayüz, USB/HID gönderimi, efekt motoru ve tuş dinleme kodu Rust ile yazılmıştır. Electron, JavaScript, .NET veya ayrı yardımcı uygulama gerektirmez. Windows sistem DLL’lerini kullanır.
 
 ## Kullanım
 
-`RS7-Isik-v1.0.0-Windows-x64.exe` dosyasını açın. Önce eski RS7 Işık uygulamasını ve ATK HUB’ı tamamen kapatın. **Klavyeyi bağla → mod seç → Başlat** sırasını izleyin.
+`RS7-Isik-v1.0.1-Windows-x64.exe` dosyasını açın. Önce eski RS7 Işık uygulamasını ve ATK HUB’ı tamamen kapatın. **Klavyeyi bağla → mod seç → Başlat** sırasını izleyin.
 
 - **Hız:** 0.20×–3.00×; çalışan efekte anında uygulanır.
 - **Parlaklık:** %0–100.
