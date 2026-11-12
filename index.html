@@ -1,12 +1,13 @@
 <!doctype html>
-<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>RS7 Işık</title><link rel="stylesheet" href="style.css"></head>
+<html lang="tr"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; object-src 'none'; base-uri 'none'"><meta name="viewport" content="width=device-width,initial-scale=1"><title>RS7 Işık</title><link rel="stylesheet" href="style.css"></head>
 <body><main><h1>RS7 Işık <small>Geliştirme sürümü</small></h1>
 <p>ATK RS7 Air · Türkçe aydınlatma kontrolü</p>
-<p class="note">Donanım uyumluluğu henüz fiziksel klavyede doğrulanmadı. Klavyeyi USB ile bağlayın ve ATK HUB’ı kapatın. Efektler bu uygulama açıkken hesaplanır.</p>
+<p class="note">Klavyeyi USB ile bağlayın ve ATK HUB’ı kapatın. Efektler bu uygulama açıkken hesaplanır. İlk web sürümünün çalıştığı kullanıcı tarafından doğrulandı; masaüstü sürümü ve tuşa tepki modu deneme aşamasında.</p>
 <div class="controls"><button id="connect">Klavyeyi bağla</button><button id="disconnect" disabled>Bağlantıyı kes</button><button id="start" disabled>Klavyede başlat</button><button id="stop" disabled>Durdur ve ışıkları kapat</button></div>
 <p id="status" role="status" aria-live="polite">Önizleme açık · Klavye bağlı değil</p>
 <section class="controls"><label>Işık modu <select id="effect"></select></label><label>Parlaklık <input id="brightness" type="range" min="0" max="100" value="60"><output id="level">%60</output></label><label>Renk <input id="color" type="color" value="#39c5ff"></label></section>
 <p id="color-note">Renk seçimi Sabit renk ve Nefes modlarında kullanılır.</p>
+<p>Tuşa basınca dalga: bastığınız tuştan renkli halka yayılır, ardından söner. Masaüstü sürümünde bu mod başlatıldığında diğer uygulamalarda da çalışır. Tuşlar kaydedilmez veya gönderilmez. Windows tuş olayları kullanıldığı için başka bir klavye de efekti tetikleyebilir; Fn tuşu ayrı algılanmaz. Tarayıcıda yalnızca bu sayfa odaktayken çalışır.</p>
 <div id="keyboard" aria-label="Efekt önizlemesi"></div>
 <p>Önizleme, klavyeye gönderilecek LED renklerini gösterir. Bağlantı kurmak tek başına efekti başlatmaz. Durdurma ve bağlantıyı kesme ışıkları kapatır; önceki ATK efektini geri yüklemek için ATK HUB’ı kullanın.</p>
 </main><script type="module" src="src/app.js"></script></body></html>
