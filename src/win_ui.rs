@@ -637,8 +637,9 @@ pub fn run() {
         );
         if preview {
             let mut s = ui.worker.settings.lock().unwrap();
-            s.effect = 11;
-            s.palette = 2;
+            s.effect = 64;
+            s.speed = 1.0;
+            s.palette = 0;
             s.brightness = 0.8;
             s.first = [198, 244, 50];
             s.second = [255, 255, 255];
@@ -648,6 +649,9 @@ pub fn run() {
 
         SetWindowLongPtrW(hwnd, GWLP_USERDATA, (&mut *ui) as *mut Ui as isize);
 
+        if preview {
+            text(GetDlgItem(hwnd, SEARCH), "kalp");
+        }
         let dark: i32 = 1;
         windows_sys::Win32::Graphics::Dwm::DwmSetWindowAttribute(
             hwnd,

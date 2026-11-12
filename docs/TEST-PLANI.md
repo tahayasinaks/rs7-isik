@@ -1,6 +1,6 @@
-# RS7 v1.1.0 — kullanıcı test planı
+# RS7 v1.1.1 — kullanıcı test planı
 
-İndirilecek dosya: RS7-v1.1.0-Windows-x64.exe. Eski RS7 sürümünden tepsi menüsü → Tamamen çık ile çıkın; ATK HUB kapalı, klavye USB ile bağlı olsun.
+İndirilecek dosya: RS7-v1.1.1-Windows-x64.exe. Eski RS7 sürümünden tepsi menüsü → Tamamen çık ile çıkın; ATK HUB kapalı, klavye USB ile bağlı olsun.
 
 | Kontrol | Beklenen sonuç |
 |---|---|

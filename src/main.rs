@@ -1,6 +1,7 @@
 #![cfg_attr(not(test), windows_subsystem = "windows")]
 mod brand;
 mod hardware;
+mod layout;
 mod library;
 mod lighting;
 mod preferences;

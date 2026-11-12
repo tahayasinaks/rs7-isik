@@ -21,18 +21,27 @@ fn heartbeat(t: f32) -> f32 {
     let u = t.rem_euclid(2.5);
     (-((u - 0.3) * 9.).powi(2)).exp() + 0.65 * (-((u - 0.73) * 11.).powi(2)).exp()
 }
-fn heart_pixel(row: u8, col: u8) -> bool {
-    // Symmetric 15-column LED stencil. The wide physical spacebar stays dark,
-    // so it does not turn the heart's point into a long horizontal stripe.
-    const ROWS: [u16; 6] = [
-        0b000011000110000,
-        0b000111111111000,
-        0b000011111110000,
-        0b000001111100000,
-        0b000000111000000,
-        0,
-    ];
-    row < 6 && col < 15 && (ROWS[row as usize] & (1 << col)) != 0
+fn heart_shape(x: f32, y: f32) -> bool {
+    let a = x * x + y * y - 1.;
+    a * a * a - x * x * y * y * y <= 0.
+}
+fn heart_coverage(row: u8, col: u8) -> f32 {
+    let Some((left, top, width, height)) = crate::layout::led_rect(row, col) else {
+        return 0.;
+    };
+    // Anchor the cusp on N, not on a rectangular matrix column. Horizontal area
+    // sampling softens the contour without filling the notch from a neighbouring row.
+    let (tip_left, _, tip_width, _) = crate::layout::led_rect(4, 6).unwrap();
+    let centre_x = tip_left + tip_width * 0.5;
+    let y = (1.91 - (top + height * 0.5)) / 1.35;
+    let mut inside = 0.;
+    for n in 0..17 {
+        let px = left + width * (0.06 + 0.88 * (n as f32 + 0.5) / 17.);
+        if heart_shape((px - centre_x) / 2.9, y) {
+            inside += 1.;
+        }
+    }
+    inside / 17.
 }
 fn clock_pixel(x: usize, y: usize, h: u8, m: u8) -> bool {
     const DIGITS: [[u8; 5]; 10] = [
@@ -389,11 +398,7 @@ pub(super) fn render(
             63 => (r * 0.07 + t * 0.1, band(r - audio * 8., 1.) * audio),
             64 => (
                 0.98,
-                if heart_pixel(row, col) {
-                    0.35 + 0.65 * heartbeat(t)
-                } else {
-                    0.
-                },
+                heart_coverage(row, col) * (0.35 + 0.65 * heartbeat(t)),
             ),
             _ => (0., 0.),
         };
@@ -405,23 +410,47 @@ pub(super) fn render(
 mod heart_tests {
     use super::*;
     #[test]
-    fn heart_has_two_lobes_a_taper_and_a_dark_background() {
+    fn analytic_heart_is_mirrored_with_a_notch_and_single_cusp() {
+        for y in [-1.2, -0.8, 0., 0.7, 1.2] {
+            for x in [-1.2, -0.6, -0.2, 0., 0.4, 0.9] {
+                assert_eq!(heart_shape(x, y), heart_shape(-x, y));
+            }
+        }
+        assert!(!heart_shape(0., 1.2));
+        assert!(heart_shape(-0.6, 1.2));
+        assert!(heart_shape(0.6, 1.2));
+        assert!(heart_shape(0., -0.95));
+        assert!(!heart_shape(0.6, -0.95));
+    }
+    #[test]
+    fn physical_cusp_is_on_n_and_unused_slots_are_dark() {
+        assert!(heart_coverage(4, 6) > 0.8);
+        assert!(heart_coverage(4, 6) > heart_coverage(4, 5));
+        assert!(heart_coverage(4, 6) > heart_coverage(4, 7));
+        assert_eq!(heart_coverage(0, 7), 0.);
+        assert_eq!(heart_coverage(5, 5), 0.);
+        for r in 0..6 {
+            for c in 0..15 {
+                let v = heart_coverage(r, c);
+                assert!((0.0..=1.).contains(&v));
+                if crate::layout::led_rect(r, c).is_none() {
+                    assert_eq!(v, 0.);
+                }
+            }
+        }
+    }
+    #[test]
+    fn heart_pulses_and_keeps_background_dark() {
         let s = Settings {
             effect: 64,
             brightness: 1.,
             ..Default::default()
         };
-        let f = render(&s, 0.3, 0.3, &[], &LiveInput::default());
-        for r in 0..6 {
-            for c in 0..15 {
-                assert_eq!(heart_pixel(r, c), heart_pixel(r, 14 - c));
-            }
-        }
-        assert_eq!(f[7], [0; 3]);
-        assert_ne!(f[4], [0; 3]);
-        assert_ne!(f[10], [0; 3]);
-        assert_eq!(f[0], [0; 3]);
-        assert_eq!(f[80], [0; 3]);
-        assert_ne!(f, render(&s, 1.4, 1.4, &[], &LiveInput::default()));
+        let a = render(&s, 0.3, 0.3, &[], &LiveInput::default());
+        let b = render(&s, 1.4, 1.4, &[], &LiveInput::default());
+        assert_ne!(a, b);
+        assert_eq!(a[0], [0; 3]);
+        assert_eq!(a[7], [0; 3]);
+        assert_ne!(a[66], [0; 3]);
     }
 }

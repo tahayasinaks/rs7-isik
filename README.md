@@ -8,11 +8,15 @@ ATK RS7 Air için Türkçe, yerel Windows RGB uygulaması. Rust ile yazılmışt
 
 ## Kullanım
 
-1. Releases → **RS7-v1.1.0-Windows-x64.exe** dosyasını indirin. Kaynak ZIP'i veya eski Onizleme EXE'sini kullanmayın.
+1. Releases → **RS7-v1.1.1-Windows-x64.exe** dosyasını indirin. Kaynak ZIP'i veya eski Onizleme EXE'sini kullanmayın.
 2. Eski RS7 sürümünden tepsi simgesi → **Tamamen çık** ile çıkın; ATK HUB'ı kapatın.
 3. Klavyeyi USB ile bağlayın, uygulamada **Klavyeyi bağla** seçin.
 4. Bir efekt seçip **Başlat** seçin. Renk, hız ve parlaklık değişiklikleri çalışırken uygulanır.
 5. **X / küçült**: efekt sistem tepsisinde devam eder. **Tamamen çık**: akış kapanır, USB bırakılır.
+
+## v1.1.1 düzeltmesi
+
+Kalp şekli artık eşit sütunlu bir LED maskesi yerine gerçek tuş konumlarına göre çizilir. Kaydırılmış satırlar ve geniş tuşlar hesaba katılır; sivri uç N tuşunun merkezine oturur. Kenarlarda yumuşak parlaklık geçişi kullanılır.
 
 ## Özellikler
 
@@ -29,7 +33,7 @@ Bazı modlarda hız veya palet anlamlı değildir ve ilgili denetim pasiftir. Sa
 
 ## Doğrulama ve sınırlar
 
-21 otomatik Rust testi; efektlerin örnek çıktıları, parlaklık sınırı, tek renkte hareket, Türkçe arama, tuş/LED eşlemesi, USB paketleri, ayar kaydı ve gömülü logo yüklemesi için çalışır. Yerel Windows canlı kaynak entegrasyon testi ayrıca çalıştırılır; CI'da masaüstü/ses aygıtı gerektirdiği için varsayılan olarak atlanır.
+23 otomatik Rust testi; efektlerin örnek çıktıları, parlaklık sınırı, tek renkte hareket, Türkçe arama, tuş/LED eşlemesi, USB paketleri, ayar kaydı ve gömülü logo yüklemesi için çalışır. Yerel Windows canlı kaynak entegrasyon testi ayrıca çalıştırılır; CI'da masaüstü/ses aygıtı gerektirdiği için varsayılan olarak atlanır.
 
 Fiziksel test cihazı USB 373b:1220 / firmware 2.02 kullanan RS7 Air'dir. Önceki sürümlerde bağlantı, tam çıkış ve X ile tepside kesintisiz devam etme doğrulandı. Yeni 65 seçeneğin tümü gerçek cihazda tek tek doğrulanmış değildir; [test planıyla](docs/TEST-PLANI.md) kontrol edebilirsiniz. Diğer firmware varyantları henüz fiziksel test edilmedi.
 
@@ -54,4 +58,4 @@ Kaynak: src/lighting.rs ve src/lighting/extended.rs efektler; src/hardware.rs HI
 
 ## Yayınlar
 
-Sürüm sırası v1.0.0 → v1.0.1 → **v1.1.0**. Her yayın EXE, SHA-256, Türkçe notlar ve kaynak etiketi içerir. [Yayınlama kılavuzu](docs/YAYINLAMA.md).
+Sürüm sırası v1.0.0 → v1.0.1 → v1.1.0 → **v1.1.1**. Her yayın EXE, SHA-256, Türkçe notlar ve kaynak etiketi içerir. [Yayınlama kılavuzu](docs/YAYINLAMA.md).
