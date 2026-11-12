@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>RS7 Işık</title><link rel="stylesheet" href="style.css"></head>
+<body><main><h1>RS7 Işık <small>Geliştirme sürümü</small></h1>
+<p>ATK RS7 Air · Türkçe aydınlatma kontrolü</p>
+<p class="note">Donanım uyumluluğu henüz fiziksel klavyede doğrulanmadı. Klavyeyi USB ile bağlayın ve ATK HUB’ı kapatın. Efektler bu uygulama açıkken hesaplanır.</p>
+<div class="controls"><button id="connect">Klavyeyi bağla</button><button id="disconnect" disabled>Bağlantıyı kes</button><button id="start" disabled>Klavyede başlat</button><button id="stop" disabled>Durdur ve ışıkları kapat</button></div>
+<p id="status" role="status" aria-live="polite">Önizleme açık · Klavye bağlı değil</p>
+<section class="controls"><label>Işık modu <select id="effect"></select></label><label>Parlaklık <input id="brightness" type="range" min="0" max="100" value="60"><output id="level">%60</output></label><label>Renk <input id="color" type="color" value="#39c5ff"></label></section>
+<p id="color-note">Renk seçimi Sabit renk ve Nefes modlarında kullanılır.</p>
+<div id="keyboard" aria-label="Efekt önizlemesi"></div>
+<p>Önizleme, klavyeye gönderilecek LED renklerini gösterir. Bağlantı kurmak tek başına efekti başlatmaz. Durdurma ve bağlantıyı kesme ışıkları kapatır; önceki ATK efektini geri yüklemek için ATK HUB’ı kullanın.</p>
+</main><script type="module" src="src/app.js"></script></body></html>
