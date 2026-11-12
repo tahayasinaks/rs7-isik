@@ -1,5 +1,6 @@
 use crate::{
     lighting::{self, EFFECTS, PALETTES},
+    tray,
     worker::{Command, Worker, CAPTURE},
 };
 use std::sync::atomic::Ordering;
@@ -12,7 +13,7 @@ use std::{
 use windows_sys::Win32::{
     Foundation::*,
     Graphics::Gdi::*,
-    System::LibraryLoader::GetModuleHandleW,
+    System::{LibraryLoader::GetModuleHandleW, Threading::CreateMutexW},
     UI::{Controls::Dialogs::*, Controls::*, Input::KeyboardAndMouse::*, WindowsAndMessaging::*},
 };
 static KEYS: OnceLock<SyncSender<(u32, Instant)>> = OnceLock::new();
@@ -36,7 +37,9 @@ struct Ui {
     first: HWND,
     second: HWND,
     font: HFONT,
-    last_status: String,
+    last_status: RefCell<String>,
+    tray: RefCell<Option<tray::Tray>>,
+    taskbar_created: u32,
 }
 fn wide(text: &str) -> Vec<u16> {
     text.encode_utf16().chain(Some(0)).collect()
@@ -220,10 +223,31 @@ unsafe fn build(hwnd: HWND, state: &mut Ui) {
         f,
     );
     child(hwnd,"STATIC","Tuşa basınca dalga: bastığınız tuştan halka yayılır. Tuşlar kaydedilmez veya internete gönderilmez.",0,24,638,990,24,0,f);
-    child(hwnd,"STATIC","Küçültme: efekt sürer. X ile çıkış: özel efekt sonlandırılır. Fn algılanmaz; diğer klavyeler de tetikleyebilir.",0,24,666,990,24,0,f);
+    child(hwnd,"STATIC","X / küçült: sistem tepsisinde çalışır. Tam çıkış: tepsi simgesine sağ tıklayın → Tamamen çık.",0,24,666,990,24,0,f);
     SetTimer(hwnd, 1, 50, None);
+    let s = state.worker.settings.lock().unwrap();
+    SendMessageW(GetDlgItem(hwnd, EFFECT), CB_SETCURSEL, s.effect, 0);
+    SendMessageW(GetDlgItem(hwnd, PALETTE), CB_SETCURSEL, s.palette, 0);
+    SendMessageW(
+        brightness,
+        TBM_SETPOS,
+        1,
+        (s.brightness * 100.).round() as isize,
+    );
+    SendMessageW(speed, TBM_SETPOS, 1, (s.speed * 100.).round() as isize);
+    text(
+        state.brightness,
+        &format!("Parlaklık: %{}", (s.brightness * 100.).round() as u32),
+    );
+    text(state.speed, &format!("Hız: {:.2}×", s.speed));
+    for (control, c, n) in [(state.first, s.first, 1), (state.second, s.second, 2)] {
+        text(
+            control,
+            &format!("{n}. renk: #{:02X}{:02X}{:02X}", c[0], c[1], c[2]),
+        );
+    }
 }
-unsafe fn choose(hwnd: HWND, state: &mut Ui, second: bool) {
+unsafe fn choose(hwnd: HWND, state: &Ui, second: bool) {
     let mut settings = state.worker.settings.lock().unwrap().clone();
     let value = if second {
         settings.second
@@ -351,8 +375,58 @@ unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, w: WPARAM, l: LPARAM) ->
     if pointer.is_null() {
         return DefWindowProcW(hwnd, msg, w, l);
     }
-    let state = &mut *pointer;
+    // Win32 modal dialogs and menus can re-enter this callback. Use shared state,
+    // not an exclusive &mut Ui spanning calls into the Windows message pump.
+    let state = &*pointer;
+    if msg == state.taskbar_created && msg != 0 {
+        if let Some(tray) = &mut *state.tray.borrow_mut() {
+            tray.recreate();
+            if !tray.available {
+                ShowWindow(hwnd, SW_SHOW);
+            }
+        }
+        return 0;
+    }
     match msg {
+        tray::SHOW => {
+            ShowWindow(hwnd, SW_RESTORE);
+            SetForegroundWindow(hwnd);
+            0
+        }
+        tray::MESSAGE => {
+            match l as u32 {
+                WM_LBUTTONUP | WM_LBUTTONDBLCLK => {
+                    PostMessageW(hwnd, tray::SHOW, 0, 0);
+                }
+                WM_RBUTTONUP | WM_CONTEXTMENU => {
+                    let (connected, running) = {
+                        let s = state.worker.status.lock().unwrap();
+                        (s.connected, s.running)
+                    };
+                    match tray::menu(hwnd, connected, running) {
+                        tray::OPEN => {
+                            PostMessageW(hwnd, tray::SHOW, 0, 0);
+                        }
+                        tray::START => {
+                            let _ = state.worker.command.send(Command::Start);
+                        }
+                        tray::STOP => {
+                            let _ = state.worker.command.send(Command::Stop);
+                        }
+                        tray::QUIT => {
+                            PostMessageW(hwnd, tray::EXIT, 0, 0);
+                        }
+                        _ => {}
+                    }
+                }
+                _ => {}
+            }
+            0
+        }
+        WM_SYSCOMMAND if (w as u32 & 0xfff0) == SC_MINIMIZE => {
+            hide(hwnd, state);
+            0
+        }
         WM_COMMAND => {
             let id = (w & 0xffff) as i32;
             let command = match id {
@@ -403,9 +477,9 @@ unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, w: WPARAM, l: LPARAM) ->
                     String::new()
                 }
             );
-            if label != state.last_status {
+            if label != *state.last_status.borrow() {
                 text(state.status, &label);
-                state.last_status = label;
+                *state.last_status.borrow_mut() = label;
             }
             EnableWindow(GetDlgItem(hwnd, CONNECT), (!status.connected) as i32);
             EnableWindow(
@@ -421,7 +495,9 @@ unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, w: WPARAM, l: LPARAM) ->
                 right: 1000,
                 bottom: 630,
             };
-            InvalidateRect(hwnd, &rect, 0);
+            if IsWindowVisible(hwnd) != 0 && IsIconic(hwnd) == 0 {
+                InvalidateRect(hwnd, &rect, 0);
+            }
             0
         }
         WM_PAINT => {
@@ -429,9 +505,39 @@ unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, w: WPARAM, l: LPARAM) ->
             0
         }
         WM_CLOSE => {
-            KillTimer(hwnd, 1);
+            hide(hwnd, state);
+            0
+        }
+        WM_QUERYENDSESSION => 1,
+        WM_ENDSESSION if w != 0 => {
+            let _ = crate::preferences::save(&state.worker.settings.lock().unwrap());
             state.worker.shutdown();
-            if let Some(error) = &state.worker.status.lock().unwrap().close_error {
+            if let Some(icon) = &mut *state.tray.borrow_mut() {
+                icon.remove();
+            }
+            DestroyWindow(hwnd);
+            0
+        }
+        tray::EXIT => {
+            KillTimer(hwnd, 1);
+            let saved = {
+                let settings = state.worker.settings.lock().unwrap().clone();
+                crate::preferences::save(&settings)
+            };
+            if let Err(error) = saved {
+                MessageBoxW(
+                    hwnd,
+                    wide(&format!("Ayarlar kaydedilemedi: {error}")).as_ptr(),
+                    wide("Ayar kaydı").as_ptr(),
+                    MB_OK | MB_ICONWARNING,
+                );
+            }
+            state.worker.shutdown();
+            if let Some(icon) = &mut *state.tray.borrow_mut() {
+                icon.remove();
+            }
+            let close_error = state.worker.status.lock().unwrap().close_error.clone();
+            if let Some(error) = close_error {
                 MessageBoxW(hwnd,wide(&format!("Klavyeye kapatma komutu gönderilemedi: {error}\nIşıklar sürerse USB bağlantısını çıkarıp takın.")).as_ptr(),wide("USB bağlantısı").as_ptr(),MB_OK|MB_ICONWARNING);
             }
             DestroyWindow(hwnd);
@@ -444,8 +550,28 @@ unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, w: WPARAM, l: LPARAM) ->
         _ => DefWindowProcW(hwnd, msg, w, l),
     }
 }
+unsafe fn hide(hwnd: HWND, state: &Ui) {
+    if state.tray.borrow().as_ref().is_some_and(|t| t.available) {
+        ShowWindow(hwnd, SW_HIDE);
+    } else {
+        ShowWindow(hwnd, SW_MINIMIZE);
+    }
+}
 pub fn run() {
     unsafe {
+        let mutex = CreateMutexW(
+            null(),
+            0,
+            wide("Local\\RS7IsikRust.SingleInstance").as_ptr(),
+        );
+        if !mutex.is_null() && GetLastError() == ERROR_ALREADY_EXISTS {
+            let existing = FindWindowW(wide("RS7IsikRustWindow").as_ptr(), null());
+            if !existing.is_null() {
+                PostMessageW(existing, tray::SHOW, 0, 0);
+            }
+            CloseHandle(mutex);
+            return;
+        }
         let instance = GetModuleHandleW(null());
         let class = wide("RS7IsikRustWindow");
         let mut wc: WNDCLASSW = std::mem::zeroed();
@@ -488,12 +614,14 @@ pub fn run() {
             first: null_mut(),
             second: null_mut(),
             font,
-            last_status: String::new(),
+            last_status: RefCell::new(String::new()),
+            tray: RefCell::new(None),
+            taskbar_created: RegisterWindowMessageW(wide("TaskbarCreated").as_ptr()),
         });
         let hwnd = CreateWindowExW(
             0,
             class.as_ptr(),
-            wide("RS7 Işık — Rust 0.3.0").as_ptr(),
+            wide(&format!("RS7 Işık — v{}", env!("CARGO_PKG_VERSION"))).as_ptr(),
             WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
             CW_USEDEFAULT,
             CW_USEDEFAULT,
@@ -509,6 +637,7 @@ pub fn run() {
         }
         SetWindowLongPtrW(hwnd, GWLP_USERDATA, (&mut *ui) as *mut Ui as isize);
         build(hwnd, &mut ui);
+        *ui.tray.borrow_mut() = Some(tray::Tray::new(hwnd));
         let keyboard_hook = SetWindowsHookExW(WH_KEYBOARD_LL, Some(hook), instance, 0);
         if keyboard_hook.is_null() {
             MessageBoxW(
@@ -534,5 +663,8 @@ pub fn run() {
         }
         ui.worker.shutdown();
         DeleteObject(font);
+        if !mutex.is_null() {
+            CloseHandle(mutex);
+        }
     }
 }

@@ -1,6 +1,11 @@
-name: Rust Windows EXE
+name: Rust Windows Release
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Cargo.toml ile aynı sürüm (örnek: 1.0.0)'
+        required: true
+        type: string
   push:
     tags: ['v*']
 permissions:
@@ -8,12 +13,46 @@ permissions:
 jobs:
   portable:
     runs-on: windows-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
+      - name: Sürümü doğrula
+        shell: pwsh
+        env:
+          REQUESTED: ${{ inputs.version }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $metadata = cargo metadata --no-deps --format-version 1 --locked | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0) { throw 'Cargo metadata okunamadı.' }
+          $version = ($metadata.packages | Where-Object name -eq 'rs7-isik').version
+          $requested = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME -replace '^v', '' } else { $env:REQUESTED }
+          if ($requested -notmatch '^\d+\.\d+\.\d+$' -or $requested -ne $version) { throw 'Etiket ve Cargo sürümü eşleşmiyor.' }
+          if (!(Test-Path "releases/v$version.md")) { throw 'Türkçe sürüm notları eksik.' }
+          "VERSION=$version" >> $env:GITHUB_ENV
+          "TAG=v$version" >> $env:GITHUB_ENV
       - run: cargo test --locked
       - run: cargo build --release --locked
+      - name: Yayın dosyalarını hazırla
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force release-artifacts | Out-Null
+          $name = "RS7-Isik-v$env:VERSION-Windows-x64.exe"
+          Copy-Item target/release/rs7-isik.exe "release-artifacts/$name"
+          $hash = (Get-FileHash "release-artifacts/$name" -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  $name" | Set-Content release-artifacts/SHA256SUMS.txt -Encoding ascii
       - uses: actions/upload-artifact@v4
         with:
-          name: RS7-Isik-Rust-Windows-x64
-          path: target/release/rs7-isik.exe
+          name: RS7-Isik-v${{ env.VERSION }}-Windows-x64
+          path: release-artifacts/*
           if-no-files-found: error
+      - name: GitHub Releases üzerinde yayımla
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release view $env:TAG *> $null
+          if ($LASTEXITCODE -eq 0) { throw 'Bu sürüm zaten yayımlanmış. Yeni sürüm numarası kullanın.' }
+          gh release create $env:TAG release-artifacts/* --target $env:GITHUB_SHA --title "RS7 Işık $env:TAG" --notes-file "releases/$env:TAG.md" --latest
+          if ($LASTEXITCODE -ne 0) { throw 'GitHub Release oluşturulamadı.' }

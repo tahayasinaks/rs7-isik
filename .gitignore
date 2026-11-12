@@ -6,3 +6,4 @@ target/
 *.zip
 .env*
 !.env.example
+release-artifacts/

@@ -1,12 +1,12 @@
 [package]
 name = "rs7-isik"
-version = "0.3.0"
+version = "1.0.0"
 edition = "2021"
 description = "ATK RS7 Air için yerel Rust aydınlatma uygulaması"
 
 [dependencies]
 hidapi = { version = "2.6.7", default-features = false, features = ["windows-native"] }
-windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging", "Win32_UI_Controls", "Win32_UI_Controls_Dialogs", "Win32_UI_Input_KeyboardAndMouse", "Win32_Graphics_Gdi", "Win32_System_LibraryLoader"] }
+windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Security", "Win32_System_Threading", "Win32_UI_Shell", "Win32_UI_WindowsAndMessaging", "Win32_UI_Controls", "Win32_UI_Controls_Dialogs", "Win32_UI_Input_KeyboardAndMouse", "Win32_Graphics_Gdi", "Win32_System_LibraryLoader"] }
 
 [profile.release]
 lto = true

@@ -1,6 +1,6 @@
 pub type Rgb = [u8; 3];
 pub type Frame = [Rgb; 90];
-pub const EFFECTS: [&str; 11] = [
+pub const EFFECTS: [&str; 12] = [
     "Tuşa basınca dalga",
     "Sürekli dalga",
     "Çapraz dalga",
@@ -12,9 +12,10 @@ pub const EFFECTS: [&str; 11] = [
     "Nefes",
     "Sabit renk",
     "Kapalı",
+    "Deniz dalgası",
 ];
 pub const PALETTES: [&str; 3] = ["Gökkuşağı", "Tek renk", "İki renk geçişi"];
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Settings {
     pub effect: usize,
     pub brightness: f32,
@@ -104,6 +105,23 @@ pub fn render(s: &Settings, phase: f32, now: f32, presses: &[Press]) -> Frame {
         let (row, col) = coord(index);
         let (x, y) = (col as f32, row as f32);
         let mut rgb = [0; 3];
+        if s.effect == 11 {
+            // A broad moving swell and a narrow bright foam crest, rather than a rainbow strip.
+            let wave = (x * 0.55 + y * 0.9 - phase * 2.).sin() * 0.5 + 0.5;
+            let foam = wave.powi(10);
+            let brightness = s.brightness.clamp(0., 1.);
+            return if s.palette == 0 {
+                let deep = [0., 12., 65.];
+                let surf = [0., 155., 210.];
+                let crest = [190., 245., 255.];
+                std::array::from_fn(|i| {
+                    let water = deep[i] * (1. - wave) + surf[i] * wave;
+                    ((water * (1. - foam) + crest[i] * foam) * brightness).round() as u8
+                })
+            } else {
+                palette(s, wave * 0.5, 0.15 + wave * 0.85)
+            };
+        }
         if s.effect == 0 {
             for press in presses {
                 let age = (now - press.time) * s.speed.clamp(0.2, 3.);
@@ -195,7 +213,7 @@ mod tests {
             ..Default::default()
         };
         assert!(render(&s, 0., 0., &[]).iter().all(|c| *c == [100, 0, 0]));
-        for effect in 0..11 {
+        for effect in 0..EFFECTS.len() {
             s.effect = effect;
             s.brightness = 0.;
             assert_eq!(
@@ -220,5 +238,21 @@ mod tests {
         assert_eq!(position(30), Some((1., 3.)));
         assert_eq!(position(328), Some((13., 4.)));
         assert_eq!(position(0), None);
+    }
+    #[test]
+    fn sea_moves_in_space_and_time_and_supports_custom_colors() {
+        let mut s = Settings {
+            effect: 11,
+            ..Default::default()
+        };
+        let first = render(&s, 0., 0., &[]);
+        assert_ne!(first[0], first[8]);
+        assert_ne!(first, render(&s, 1., 0., &[]));
+        assert!(first.iter().all(|c| c[2] >= c[0]));
+        s.palette = 1;
+        s.first = [255, 0, 0];
+        assert!(render(&s, 0., 0., &[])
+            .iter()
+            .all(|c| c[1] == 0 && c[2] == 0));
     }
 }

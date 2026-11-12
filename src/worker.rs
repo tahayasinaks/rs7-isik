@@ -44,13 +44,13 @@ pub struct Worker {
     pub keys: SyncSender<(u32, Instant)>,
     pub settings: Arc<Mutex<Settings>>,
     pub status: Arc<Mutex<Status>>,
-    join: Option<JoinHandle<()>>,
+    join: Mutex<Option<JoinHandle<()>>>,
 }
 impl Worker {
     pub fn new() -> Self {
         let (tx, rx) = mpsc::channel();
         let (keys, key_rx) = mpsc::sync_channel(64);
-        let settings = Arc::new(Mutex::new(Settings::default()));
+        let settings = Arc::new(Mutex::new(crate::preferences::load()));
         let status = Arc::new(Mutex::new(Status::default()));
         let (s, t) = (settings.clone(), status.clone());
         let join = thread::spawn(move || run(rx, key_rx, s, t));
@@ -59,13 +59,13 @@ impl Worker {
             keys,
             settings,
             status,
-            join: Some(join),
+            join: Mutex::new(Some(join)),
         }
     }
-    pub fn shutdown(&mut self) {
+    pub fn shutdown(&self) {
         CAPTURE.store(false, Ordering::Relaxed);
         let _ = self.command.send(Command::Exit);
-        if let Some(join) = self.join.take() {
+        if let Some(join) = self.join.lock().unwrap().take() {
             let _ = join.join();
         }
     }
@@ -151,6 +151,8 @@ fn run(
                                 while keys.try_recv().is_ok() {}
                                 last = Instant::now();
                                 next = last;
+                                frames = 0;
+                                measure = last;
                                 message(
                                     &status,
                                     "Efekt çalışıyor · Pencere küçültülse de gönderim devam eder.",
@@ -242,6 +244,11 @@ fn run(
                 CAPTURE.store(false, Ordering::Relaxed);
                 let _ = blackout(&device);
                 device = None;
+                {
+                    let mut state = status.lock().unwrap();
+                    state.frame = [[0; 3]; 90];
+                    state.fps = 0;
+                }
                 message(
                     &status,
                     format!("USB gönderimi durdu: {e}. Yeniden bağlayın."),
