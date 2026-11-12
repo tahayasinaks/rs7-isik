@@ -1,19 +1,18 @@
 # Sürüm ve GitHub Releases düzeni
 
-Tek sürüm kaynağı `Cargo.toml` paket sürümüdür. Pencere başlığı bu değerden üretilir. İlk ana yayın **v1.0.0**; **0.1.0, 0.2.0, 0.3.0** geliştirme geçmişi olarak korunur.
+Tek sürüm kaynağı Cargo.toml paket sürümüdür; Cargo.lock aynı sürümü içermelidir. Uygulamanın görünen adı RS7'dir.
 
-- Hata düzeltmesi: `1.0.0 → 1.0.1`.
-- Yeni özellik: `1.0.1 → 1.1.0`.
-- Büyük değişiklik: `1.x.x → 2.0.0 → 3.0.0`.
+- Düzeltme: 1.1.0 → 1.1.1.
+- Yeni özellik: 1.1.0 → 1.2.0.
+- Büyük değişiklik: 1.x.x → 2.0.0.
 
-## Yeni yayın
+## Yayın hazırlama
 
-1. `Cargo.toml` sürümünü artırın; `cargo check` ile `Cargo.lock` dosyasını güncelleyin.
-2. `releases/vX.Y.Z.md` içine Türkçe notları yazın. Doğrulanmamış davranışları belirtin.
-3. `cargo test --locked` ve `cargo build --release --locked` çalıştırın; USB, mod/hız/renk, X ile gizleme, geri açma ve Tamamen çık akışlarını fiziksel klavyede kontrol edin.
-4. Değişiklikleri `main` dalına yükleyin.
-5. GitHub → **Actions → Rust Windows Release → Run workflow**, sürüm alanı `X.Y.Z`. Alternatif: aynı commit üzerinde `vX.Y.Z` etiketi oluşturup gönderin.
+1. Cargo.toml / Cargo.lock sürümünü artırın, releases/vX.Y.Z.md içine Türkçe notları yazın.
+2. cargo test --locked ve cargo build --release --locked çalıştırın. Uygun fiziksel kontrolleri docs/TEST-PLANI.md ile yapın; yapılmayan kontrolleri notlarda belirtin.
+3. Dosyaları main'e **release: RS7 vX.Y.Z** ile başlayan commit mesajıyla gönderin. Bu açık yayın işareti Windows yayın işini tetikler. Sıradan main commitleri Release oluşturmaz.
+4. Alternatif: Actions → Rust Windows Release → Run workflow içinde X.Y.Z girin veya vX.Y.Z etiketi gönderin.
 
-İş akışı Cargo sürümünün etiketle eşleşmesini doğrular; test ve derlemeden sonra EXE ve SHA-256 dosyasını Releases bölümüne ekler. Var olan sürümü değiştirmez; düzeltme için yeni sürüm çıkarın. Yazma yetkisi yalnızca yayınlama işine verilir.
+İş akışı talep/Cargo sürüm eşleşmesini ve Türkçe notları doğrular, test eder, MSVC ile statik çalışma zamanı kullanarak derler. RS7-vX.Y.Z-Windows-x64.exe, TEST-PLANI.md ve SHA256SUMS.txt dosyalarını yayımlar. Eski yayınların dosyalarını değiştirmez; düzeltme için yeni sürüm gerekir. GitHub kaynak ZIP/TAR dosyalarını otomatik sağlar.
 
-Her yayın: `RS7-Isik-vX.Y.Z-Windows-x64.exe`, `SHA256SUMS.txt`, Türkçe notlar ve kaynak etiketi. Kaynak ZIP/TAR dosyalarını GitHub otomatik sunar.
+Yayın işi yalnızca kendi görevinde contents:write yetkisi alır. Aynı anda tek yayın işi çalışır.

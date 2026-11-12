@@ -7,11 +7,19 @@ on:
         required: true
         type: string
   push:
+    branches: ['main']
     tags: ['v*']
+concurrency:
+  group: rs7-windows-release
+  cancel-in-progress: false
 permissions:
   contents: read
 jobs:
   portable:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      startsWith(github.ref, 'refs/tags/v') ||
+      (github.ref == 'refs/heads/main' && startsWith(github.event.head_commit.message, 'release: RS7 v'))
     runs-on: windows-latest
     permissions:
       contents: write
@@ -21,12 +29,17 @@ jobs:
         shell: pwsh
         env:
           REQUESTED: ${{ inputs.version }}
+          RELEASE_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
           $ErrorActionPreference = 'Stop'
           $metadata = cargo metadata --no-deps --format-version 1 --locked | ConvertFrom-Json
           if ($LASTEXITCODE -ne 0) { throw 'Cargo metadata okunamadı.' }
           $version = ($metadata.packages | Where-Object name -eq 'rs7-isik').version
-          $requested = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME -replace '^v', '' } else { $env:REQUESTED }
+          $requested = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME -replace '^v', '' } elseif ($env:REQUESTED) { $env:REQUESTED } else {
+            $match = [regex]::Match($env:RELEASE_MESSAGE, '^release: RS7 v(\d+\.\d+\.\d+)(?:\s|$)')
+            if (!$match.Success) { throw 'Yayın commit mesajında sürüm yok.' }
+            $match.Groups[1].Value
+          }
           if ($requested -notmatch '^\d+\.\d+\.\d+$' -or $requested -ne $version) { throw 'Etiket ve Cargo sürümü eşleşmiyor.' }
           if (!(Test-Path "releases/v$version.md")) { throw 'Türkçe sürüm notları eksik.' }
           "VERSION=$version" >> $env:GITHUB_ENV
@@ -37,13 +50,16 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force release-artifacts | Out-Null
-          $name = "RS7-Isik-v$env:VERSION-Windows-x64.exe"
+          $name = "RS7-v$env:VERSION-Windows-x64.exe"
           Copy-Item target/release/rs7-isik.exe "release-artifacts/$name"
-          $hash = (Get-FileHash "release-artifacts/$name" -Algorithm SHA256).Hash.ToLowerInvariant()
-          "$hash  $name" | Set-Content release-artifacts/SHA256SUMS.txt -Encoding ascii
+          Copy-Item docs/TEST-PLANI.md release-artifacts/TEST-PLANI.md
+          Get-ChildItem release-artifacts -File | Sort-Object Name | ForEach-Object {
+            $hash = (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+            "$hash  $($_.Name)"
+          } | Set-Content release-artifacts/SHA256SUMS.txt -Encoding ascii
       - uses: actions/upload-artifact@v4
         with:
-          name: RS7-Isik-v${{ env.VERSION }}-Windows-x64
+          name: RS7-v${{ env.VERSION }}-Windows-x64
           path: release-artifacts/*
           if-no-files-found: error
       - name: GitHub Releases üzerinde yayımla
@@ -54,5 +70,5 @@ jobs:
         run: |
           gh release view $env:TAG *> $null
           if ($LASTEXITCODE -eq 0) { throw 'Bu sürüm zaten yayımlanmış. Yeni sürüm numarası kullanın.' }
-          gh release create $env:TAG release-artifacts/* --target $env:GITHUB_SHA --title "RS7 Işık $env:TAG" --notes-file "releases/$env:TAG.md" --latest
+          gh release create $env:TAG release-artifacts/* --target $env:GITHUB_SHA --title "RS7 $env:TAG" --notes-file "releases/$env:TAG.md" --latest
           if ($LASTEXITCODE -ne 0) { throw 'GitHub Release oluşturulamadı.' }

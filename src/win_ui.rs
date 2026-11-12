@@ -1,5 +1,7 @@
+mod keyboard;
+mod theme;
 use crate::{
-    lighting::{self, EFFECTS, PALETTES},
+    lighting::{self, EFFECTS},
     tray,
     worker::{Command, Worker, CAPTURE},
 };
@@ -28,6 +30,10 @@ const BRIGHT: i32 = 203;
 const SPEED: i32 = 204;
 const FIRST: i32 = 205;
 const SECOND: i32 = 206;
+const SEARCH: i32 = 207;
+const CATEGORY_FILTER: i32 = 208;
+const PREVIOUS: i32 = 209;
+const NEXT: i32 = 210;
 const TBM_GETPOS: u32 = WM_USER;
 struct Ui {
     worker: Worker,
@@ -40,6 +46,12 @@ struct Ui {
     last_status: RefCell<String>,
     tray: RefCell<Option<tray::Tray>>,
     taskbar_created: u32,
+    preview: bool,
+    started: Instant,
+    preview_running: std::cell::Cell<bool>,
+    library: RefCell<crate::library::Library>,
+    preview_presses: RefCell<Vec<lighting::Press>>,
+    hovered: std::cell::Cell<i32>,
 }
 fn wide(text: &str) -> Vec<u16> {
     text.encode_utf16().chain(Some(0)).collect()
@@ -77,175 +89,7 @@ unsafe fn child(
     window
 }
 unsafe fn build(hwnd: HWND, state: &mut Ui) {
-    let f = state.font;
-    child(hwnd, "STATIC", "RS7 Işık · Rust", 0, 24, 20, 750, 36, 0, f);
-    child(
-        hwnd,
-        "STATIC",
-        "ATK RS7 Air — USB ile bağlayın; ATK HUB ve eski Electron uygulamasını kapatın.",
-        0,
-        24,
-        60,
-        980,
-        28,
-        0,
-        f,
-    );
-    for (id, label, x, w) in [
-        (CONNECT, "Klavyeyi bağla", 24, 180),
-        (START, "Başlat", 216, 130),
-        (STOP, "Efekti durdur", 358, 230),
-        (DISCONNECT, "Bağlantıyı kes", 600, 180),
-    ] {
-        child(
-            hwnd,
-            "BUTTON",
-            label,
-            id,
-            x,
-            104,
-            w,
-            40,
-            BS_PUSHBUTTON as u32 | WS_TABSTOP,
-            f,
-        );
-    }
-    child(hwnd, "STATIC", "Işık modu", 0, 24, 166, 120, 25, 0, f);
-    let combo = child(
-        hwnd,
-        "COMBOBOX",
-        "",
-        EFFECT,
-        148,
-        160,
-        300,
-        400,
-        CBS_DROPDOWNLIST as u32 | WS_TABSTOP | WS_VSCROLL,
-        f,
-    );
-    for label in EFFECTS {
-        SendMessageW(combo, CB_ADDSTRING, 0, wide(label).as_ptr() as isize);
-    }
-    SendMessageW(combo, CB_SETCURSEL, 0, 0);
-    child(hwnd, "STATIC", "Renk düzeni", 0, 480, 166, 145, 25, 0, f);
-    let palette = child(
-        hwnd,
-        "COMBOBOX",
-        "",
-        PALETTE,
-        626,
-        160,
-        350,
-        200,
-        CBS_DROPDOWNLIST as u32 | WS_TABSTOP | WS_VSCROLL,
-        f,
-    );
-    for label in PALETTES {
-        SendMessageW(palette, CB_ADDSTRING, 0, wide(label).as_ptr() as isize);
-    }
-    SendMessageW(palette, CB_SETCURSEL, 0, 0);
-    state.brightness = child(hwnd, "STATIC", "Parlaklık: %60", 0, 24, 224, 180, 28, 0, f);
-    let brightness = child(
-        hwnd,
-        "msctls_trackbar32",
-        "",
-        BRIGHT,
-        205,
-        215,
-        240,
-        45,
-        WS_TABSTOP,
-        f,
-    );
-    SendMessageW(brightness, TBM_SETRANGE, 1, (100 << 16) as isize);
-    SendMessageW(brightness, TBM_SETPOS, 1, 60);
-    state.speed = child(hwnd, "STATIC", "Hız: 1.00×", 0, 480, 224, 160, 28, 0, f);
-    let speed = child(
-        hwnd,
-        "msctls_trackbar32",
-        "",
-        SPEED,
-        636,
-        215,
-        340,
-        45,
-        WS_TABSTOP,
-        f,
-    );
-    SendMessageW(speed, TBM_SETRANGE, 1, ((300 << 16) | 20) as isize);
-    SendMessageW(speed, TBM_SETPOS, 1, 100);
-    state.first = child(
-        hwnd,
-        "BUTTON",
-        "1. renk: #1EB4FF",
-        FIRST,
-        24,
-        278,
-        250,
-        40,
-        WS_TABSTOP,
-        f,
-    );
-    state.second = child(
-        hwnd,
-        "BUTTON",
-        "2. renk: #C814FF",
-        SECOND,
-        290,
-        278,
-        250,
-        40,
-        WS_TABSTOP,
-        f,
-    );
-    child(
-        hwnd,
-        "STATIC",
-        "Renk seçince özel renk düzeni etkinleşir. İkinci renk, iki renk geçişinde kullanılır.",
-        0,
-        24,
-        330,
-        980,
-        25,
-        0,
-        f,
-    );
-    state.status = child(
-        hwnd,
-        "STATIC",
-        "Klavye bağlı değil.",
-        0,
-        24,
-        378,
-        980,
-        50,
-        0,
-        f,
-    );
-    child(hwnd,"STATIC","Tuşa basınca dalga: bastığınız tuştan halka yayılır. Tuşlar kaydedilmez veya internete gönderilmez.",0,24,638,990,24,0,f);
-    child(hwnd,"STATIC","X / küçült: sistem tepsisinde çalışır. Tam çıkış: tepsi simgesine sağ tıklayın → Tamamen çık.",0,24,666,990,24,0,f);
-    SetTimer(hwnd, 1, 50, None);
-    let s = state.worker.settings.lock().unwrap();
-    SendMessageW(GetDlgItem(hwnd, EFFECT), CB_SETCURSEL, s.effect, 0);
-    SendMessageW(GetDlgItem(hwnd, PALETTE), CB_SETCURSEL, s.palette, 0);
-    SendMessageW(
-        brightness,
-        TBM_SETPOS,
-        1,
-        (s.brightness * 100.).round() as isize,
-    );
-    SendMessageW(speed, TBM_SETPOS, 1, (s.speed * 100.).round() as isize);
-    text(
-        state.brightness,
-        &format!("Parlaklık: %{}", (s.brightness * 100.).round() as u32),
-    );
-    text(state.speed, &format!("Hız: {:.2}×", s.speed));
-    for (control, c, n) in [(state.first, s.first, 1), (state.second, s.second, 2)] {
-        text(
-            control,
-            &format!("{n}. renk: #{:02X}{:02X}{:02X}", c[0], c[1], c[2]),
-        );
-    }
+    theme::build(hwnd, state);
 }
 unsafe fn choose(hwnd: HWND, state: &Ui, second: bool) {
     let mut settings = state.worker.settings.lock().unwrap().clone();
@@ -280,64 +124,12 @@ unsafe fn choose(hwnd: HWND, state: &Ui, second: bool) {
         *state.worker.settings.lock().unwrap() = settings;
         text(
             if second { state.second } else { state.first },
-            &format!(
-                "{}. renk: #{:02X}{:02X}{:02X}",
-                if second { 2 } else { 1 },
-                c[0],
-                c[1],
-                c[2]
-            ),
+            &format!("#{:02X}{:02X}{:02X}", c[0], c[1], c[2]),
         );
     }
 }
 unsafe fn paint(hwnd: HWND, state: &Ui) {
-    let mut ps: PAINTSTRUCT = std::mem::zeroed();
-    let dc = BeginPaint(hwnd, &mut ps);
-    let frame = state.worker.status.lock().unwrap().frame;
-    let old = SelectObject(dc, state.font);
-    SetBkMode(dc, TRANSPARENT as i32);
-    const LABELS: [[&str; 15]; 6] = [
-        [
-            "Esc", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12",
-            "Ins", "Del",
-        ],
-        [
-            "`", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "+", "Sil", "End",
-        ],
-        [
-            "Tab", "Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", "[", "]", "\\", "PgUp",
-        ],
-        [
-            "Caps", "A", "S", "D", "F", "G", "H", "J", "K", "L", ";", "'", "", "Enter", "PgDn",
-        ],
-        [
-            "Shift", "Z", "X", "C", "V", "B", "N", "M", ",", ".", "/", "Shift", "", "↑", "",
-        ],
-        [
-            "Ctrl", "Win", "Alt", "", "", "Space", "", "", "", "Alt", "Fn", "←", "", "↓", "→",
-        ],
-    ];
-    for (i, rgb) in frame.iter().enumerate() {
-        let (row, col) = lighting::coord(i);
-        let x = 24 + col as i32 * 64;
-        let y = 438 + row as i32 * 31;
-        let rect = RECT {
-            left: x,
-            top: y,
-            right: x + 60,
-            bottom: y + 27,
-        };
-        let color = rgb[0] as u32 | ((rgb[1] as u32) << 8) | ((rgb[2] as u32) << 16);
-        let brush = CreateSolidBrush(color);
-        FillRect(dc, &rect, brush);
-        DeleteObject(brush);
-        let bright = rgb.iter().map(|v| *v as u32).sum::<u32>() > 420;
-        SetTextColor(dc, if bright { 0 } else { 0xffffff });
-        let label = wide(LABELS[row as usize][col as usize]);
-        TextOutW(dc, x + 5, y + 3, label.as_ptr(), (label.len() - 1) as i32);
-    }
-    SelectObject(dc, old);
-    EndPaint(hwnd, &ps);
+    theme::paint(hwnd, state);
 }
 unsafe extern "system" fn hook(code: i32, w: WPARAM, l: LPARAM) -> LRESULT {
     if code >= 0 {
@@ -388,6 +180,53 @@ unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, w: WPARAM, l: LPARAM) ->
         return 0;
     }
     match msg {
+        WM_ERASEBKGND => 1,
+        WM_NOTIFY => theme::slider(&*(l as *const NMCUSTOMDRAW)),
+        WM_DRAWITEM => {
+            theme::button(state, &*(l as *const DRAWITEMSTRUCT));
+            1
+        }
+        WM_SETCURSOR => {
+            let child = w as HWND;
+            let id = if GetParent(child) == hwnd {
+                GetDlgCtrlID(child)
+            } else {
+                0
+            };
+            let old = state.hovered.replace(id);
+            if id != old {
+                if old > 0 {
+                    InvalidateRect(GetDlgItem(hwnd, old), null(), 0);
+                }
+                if id > 0 {
+                    InvalidateRect(child, null(), 0);
+                }
+            }
+            DefWindowProcW(hwnd, msg, w, l)
+        }
+        WM_CTLCOLORSTATIC | WM_CTLCOLORBTN | WM_CTLCOLOREDIT | WM_CTLCOLORLISTBOX => {
+            let value = l as HWND == state.brightness || l as HWND == state.speed;
+            let background =
+                if value || matches!(GetDlgCtrlID(l as HWND), BRIGHT | SPEED | 211 | 212) {
+                    theme::PANEL
+                } else {
+                    theme::BG
+                };
+            SetTextColor(
+                w as HDC,
+                if l as HWND == state.status {
+                    0x96938e
+                } else if value {
+                    0x32f4c6
+                } else {
+                    theme::WHITE
+                },
+            );
+            SetBkColor(w as HDC, background);
+            SetDCBrushColor(w as HDC, background);
+            GetStockObject(DC_BRUSH) as LRESULT
+        }
+
         tray::SHOW => {
             ShowWindow(hwnd, SW_RESTORE);
             SetForegroundWindow(hwnd);
@@ -429,6 +268,77 @@ unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, w: WPARAM, l: LPARAM) ->
         }
         WM_COMMAND => {
             let id = (w & 0xffff) as i32;
+            if id == SEARCH && ((w >> 16) as u32) == EN_CHANGE {
+                theme::refresh_library(hwnd, state);
+                return 0;
+            }
+            if id == CATEGORY_FILTER {
+                let menu = CreatePopupMenu();
+                AppendMenuW(menu, MF_STRING, 800, wide("Tümü").as_ptr());
+                for (i, c) in lighting::CATEGORIES.iter().enumerate() {
+                    AppendMenuW(menu, MF_STRING, 801 + i, wide(c).as_ptr());
+                }
+                let mut r: RECT = std::mem::zeroed();
+                GetWindowRect(GetDlgItem(hwnd, CATEGORY_FILTER), &mut r);
+                let chosen = TrackPopupMenu(
+                    menu,
+                    TPM_RETURNCMD | TPM_LEFTALIGN,
+                    r.left,
+                    r.bottom,
+                    0,
+                    hwnd,
+                    null(),
+                );
+                DestroyMenu(menu);
+                if chosen >= 800 && chosen <= 807 {
+                    state.library.borrow_mut().category = if chosen == 800 {
+                        None
+                    } else {
+                        Some((chosen - 801) as usize)
+                    };
+                    theme::refresh_library(hwnd, state);
+                }
+                return 0;
+            }
+            if id == PREVIOUS || id == NEXT {
+                {
+                    let mut lib = state.library.borrow_mut();
+                    if id == PREVIOUS {
+                        lib.page = lib.page.saturating_sub(1);
+                    } else {
+                        lib.page = (lib.page + 1).min(lib.pages() - 1);
+                    }
+                }
+                theme::refresh_library(hwnd, state);
+                return 0;
+            }
+            if (400..412).contains(&id) {
+                let effect = state.library.borrow().slot((id - 400) as usize);
+                if let Some(effect) = effect {
+                    state.worker.settings.lock().unwrap().effect = effect;
+                    state.preview_presses.borrow_mut().clear();
+                }
+                theme::mode_controls(hwnd, state);
+                RedrawWindow(hwnd, null(), null_mut(), RDW_INVALIDATE | RDW_ALLCHILDREN);
+                return 0;
+            }
+            if (600..603).contains(&id) {
+                state.worker.settings.lock().unwrap().palette = (id - 600) as usize;
+                RedrawWindow(hwnd, null(), null_mut(), RDW_INVALIDATE | RDW_ALLCHILDREN);
+                return 0;
+            }
+            if state.preview && [CONNECT, START, STOP, DISCONNECT].contains(&id) {
+                if id == START {
+                    state.preview_running.set(true);
+                }
+                if id == STOP {
+                    state.preview_running.set(false);
+                }
+                theme::sync_actions(hwnd, state);
+                RedrawWindow(hwnd, null(), null_mut(), RDW_INVALIDATE | RDW_ALLCHILDREN);
+                return 0;
+            }
+
             let command = match id {
                 CONNECT => Some(Command::Connect),
                 START => Some(Command::Start),
@@ -453,6 +363,41 @@ unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, w: WPARAM, l: LPARAM) ->
             if id == FIRST || id == SECOND {
                 choose(hwnd, state, id == SECOND);
             }
+            RedrawWindow(hwnd, null(), null_mut(), RDW_INVALIDATE | RDW_ALLCHILDREN);
+            0
+        }
+        WM_LBUTTONDOWN if state.preview => {
+            let x = (l as u32 & 65535) as i32;
+            let y = ((l as u32 >> 16) & 65535) as i32;
+            if let Some((logical_x, logical_y)) = keyboard::hit(x, y) {
+                let mut presses = state.preview_presses.borrow_mut();
+                if presses.len() == 32 {
+                    presses.remove(0);
+                }
+                presses.push(lighting::Press {
+                    x: logical_x,
+                    y: logical_y,
+                    time: state.started.elapsed().as_secs_f32(),
+                });
+                SetFocus(hwnd);
+            }
+            0
+        }
+        WM_KEYDOWN if state.preview => {
+            let scan = ((l as u32 >> 16) & 255) + if l as u32 & (1 << 24) != 0 { 256 } else { 0 };
+            if l as u32 & (1 << 30) == 0 {
+                if let Some((x, y)) = lighting::position(scan) {
+                    let mut presses = state.preview_presses.borrow_mut();
+                    if presses.len() == 32 {
+                        presses.remove(0);
+                    }
+                    presses.push(lighting::Press {
+                        x,
+                        y,
+                        time: state.started.elapsed().as_secs_f32(),
+                    });
+                }
+            }
             0
         }
         WM_HSCROLL => {
@@ -461,16 +406,23 @@ unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, w: WPARAM, l: LPARAM) ->
             s.speed = SendMessageW(GetDlgItem(hwnd, SPEED), TBM_GETPOS, 0, 0) as f32 / 100.;
             text(
                 state.brightness,
-                &format!("Parlaklık: %{}", (s.brightness * 100.).round() as u32),
+                &format!("%{}", (s.brightness * 100.).round() as u32),
             );
-            text(state.speed, &format!("Hız: {:.2}×", s.speed));
+            text(state.speed, &format!("{:.2}×", s.speed));
+            0
+        }
+        WM_TIMER if state.preview => {
+            if IsWindowVisible(hwnd) != 0 && IsIconic(hwnd) == 0 {
+                InvalidateRect(hwnd, null(), 0);
+            }
             0
         }
         WM_TIMER => {
             let status = state.worker.status.lock().unwrap();
             let label = format!(
-                "{}  {}",
+                "{}  {}  {}",
                 status.message,
+                status.source_note,
                 if status.running {
                     format!("· {} kare/sn", status.fps)
                 } else {
@@ -480,20 +432,21 @@ unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, w: WPARAM, l: LPARAM) ->
             if label != *state.last_status.borrow() {
                 text(state.status, &label);
                 *state.last_status.borrow_mut() = label;
+                let header = RECT {
+                    left: 0,
+                    top: 0,
+                    right: 1160,
+                    bottom: 110,
+                };
+                InvalidateRect(hwnd, &header, 0);
             }
-            EnableWindow(GetDlgItem(hwnd, CONNECT), (!status.connected) as i32);
-            EnableWindow(
-                GetDlgItem(hwnd, START),
-                (status.connected && !status.running) as i32,
-            );
-            EnableWindow(GetDlgItem(hwnd, STOP), status.running as i32);
-            EnableWindow(GetDlgItem(hwnd, DISCONNECT), status.connected as i32);
             drop(status);
+            theme::sync_actions(hwnd, state);
             let rect = RECT {
-                left: 20,
-                top: 435,
-                right: 1000,
-                bottom: 630,
+                left: 24,
+                top: 120,
+                right: 1136,
+                bottom: 464,
             };
             if IsWindowVisible(hwnd) != 0 && IsIconic(hwnd) == 0 {
                 InvalidateRect(hwnd, &rect, 0);
@@ -505,12 +458,18 @@ unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, w: WPARAM, l: LPARAM) ->
             0
         }
         WM_CLOSE => {
-            hide(hwnd, state);
+            if state.preview {
+                DestroyWindow(hwnd);
+            } else {
+                hide(hwnd, state);
+            }
             0
         }
         WM_QUERYENDSESSION => 1,
         WM_ENDSESSION if w != 0 => {
-            let _ = crate::preferences::save(&state.worker.settings.lock().unwrap());
+            if !state.preview {
+                let _ = crate::preferences::save(&state.worker.settings.lock().unwrap());
+            }
             state.worker.shutdown();
             if let Some(icon) = &mut *state.tray.borrow_mut() {
                 icon.remove();
@@ -520,7 +479,9 @@ unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, w: WPARAM, l: LPARAM) ->
         }
         tray::EXIT => {
             KillTimer(hwnd, 1);
-            let saved = {
+            let saved = if state.preview {
+                Ok(())
+            } else {
                 let settings = state.worker.settings.lock().unwrap().clone();
                 crate::preferences::save(&settings)
             };
@@ -559,27 +520,46 @@ unsafe fn hide(hwnd: HWND, state: &Ui) {
 }
 pub fn run() {
     unsafe {
+        let preview = std::env::args().any(|a| a == "--design-preview")
+            || std::env::current_exe().ok().is_some_and(|p| {
+                p.file_stem()
+                    .is_some_and(|n| n.to_string_lossy().contains("Onizleme"))
+            });
+        let preview_class = format!("RS7DesignPreview.{}", env!("CARGO_PKG_VERSION"));
+        let preview_mutex = format!("Local\\RS7.DesignPreview.{}", env!("CARGO_PKG_VERSION"));
+        let class_name = if preview {
+            preview_class.as_str()
+        } else {
+            "RS7IsikRustWindow"
+        };
         let mutex = CreateMutexW(
             null(),
             0,
-            wide("Local\\RS7IsikRust.SingleInstance").as_ptr(),
+            wide(if preview {
+                preview_mutex.as_str()
+            } else {
+                "Local\\RS7IsikRust.SingleInstance"
+            })
+            .as_ptr(),
         );
         if !mutex.is_null() && GetLastError() == ERROR_ALREADY_EXISTS {
-            let existing = FindWindowW(wide("RS7IsikRustWindow").as_ptr(), null());
+            let existing = FindWindowW(wide(class_name).as_ptr(), null());
             if !existing.is_null() {
                 PostMessageW(existing, tray::SHOW, 0, 0);
             }
             CloseHandle(mutex);
             return;
         }
+
         let instance = GetModuleHandleW(null());
-        let class = wide("RS7IsikRustWindow");
+        let class = wide(class_name);
         let mut wc: WNDCLASSW = std::mem::zeroed();
         wc.lpfnWndProc = Some(wndproc);
         wc.hInstance = instance;
         wc.lpszClassName = class.as_ptr();
         wc.hCursor = LoadCursorW(null_mut(), IDC_ARROW);
-        wc.hbrBackground = (COLOR_WINDOW + 1) as usize as HBRUSH;
+        wc.hbrBackground = null_mut();
+        wc.hIcon = crate::brand::icon(32);
         if RegisterClassW(&wc) == 0 {
             return;
         }
@@ -588,10 +568,12 @@ pub fn run() {
             dwICC: ICC_BAR_CLASSES,
         };
         InitCommonControlsEx(&controls);
+
         let worker = Worker::new();
+
         let _ = KEYS.set(worker.keys.clone());
         let font = CreateFontW(
-            -18,
+            -16,
             0,
             0,
             0,
@@ -608,6 +590,12 @@ pub fn run() {
         );
         let mut ui = Box::new(Ui {
             worker,
+            preview,
+            started: Instant::now(),
+            preview_running: std::cell::Cell::new(true),
+            library: RefCell::new(crate::library::Library::default()),
+            preview_presses: RefCell::new(Vec::new()),
+            hovered: std::cell::Cell::new(0),
             status: null_mut(),
             brightness: null_mut(),
             speed: null_mut(),
@@ -621,12 +609,12 @@ pub fn run() {
         let hwnd = CreateWindowExW(
             0,
             class.as_ptr(),
-            wide(&format!("RS7 Işık — v{}", env!("CARGO_PKG_VERSION"))).as_ptr(),
-            WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
+            wide(crate::brand::NAME).as_ptr(),
+            WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_CLIPCHILDREN,
             CW_USEDEFAULT,
             CW_USEDEFAULT,
-            1050,
-            755,
+            1176,
+            872,
             null_mut(),
             null_mut(),
             instance,
@@ -635,11 +623,47 @@ pub fn run() {
         if hwnd.is_null() {
             return;
         }
-        SetWindowLongPtrW(hwnd, GWLP_USERDATA, (&mut *ui) as *mut Ui as isize);
+        SendMessageW(
+            hwnd,
+            WM_SETICON,
+            ICON_SMALL as usize,
+            crate::brand::icon(16) as isize,
+        );
+        SendMessageW(
+            hwnd,
+            WM_SETICON,
+            ICON_BIG as usize,
+            crate::brand::icon(48) as isize,
+        );
+        if preview {
+            let mut s = ui.worker.settings.lock().unwrap();
+            s.effect = 11;
+            s.palette = 2;
+            s.brightness = 0.8;
+            s.first = [198, 244, 50];
+            s.second = [255, 255, 255];
+        }
+
         build(hwnd, &mut ui);
-        *ui.tray.borrow_mut() = Some(tray::Tray::new(hwnd));
-        let keyboard_hook = SetWindowsHookExW(WH_KEYBOARD_LL, Some(hook), instance, 0);
-        if keyboard_hook.is_null() {
+
+        SetWindowLongPtrW(hwnd, GWLP_USERDATA, (&mut *ui) as *mut Ui as isize);
+
+        let dark: i32 = 1;
+        windows_sys::Win32::Graphics::Dwm::DwmSetWindowAttribute(
+            hwnd,
+            20,
+            &dark as *const _ as *const _,
+            4,
+        );
+        if !preview {
+            *ui.tray.borrow_mut() = Some(tray::Tray::new(hwnd));
+        }
+        let keyboard_hook = if preview {
+            null_mut()
+        } else {
+            SetWindowsHookExW(WH_KEYBOARD_LL, Some(hook), instance, 0)
+        };
+        if keyboard_hook.is_null() && !preview {
             MessageBoxW(
                 hwnd,
                 wide("Tuşa tepki dinleyicisi başlatılamadı. Diğer efektler kullanılabilir.")
@@ -648,6 +672,7 @@ pub fn run() {
                 MB_OK | MB_ICONWARNING,
             );
         }
+
         ShowWindow(hwnd, SW_SHOW);
         UpdateWindow(hwnd);
         let mut msg: MSG = std::mem::zeroed();

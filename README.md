@@ -1,51 +1,57 @@
-# RS7 Işık — v1.0.1
+# RS7
 
-ATK RS7 Air için Türkçe, yerel Windows aydınlatma uygulaması. Arayüz, USB/HID gönderimi, efekt motoru ve tuş dinleme kodu Rust ile yazılmıştır. Electron, JavaScript, .NET veya ayrı yardımcı uygulama gerektirmez. Windows sistem DLL’lerini kullanır.
+ATK RS7 Air için Türkçe, yerel Windows RGB uygulaması. Rust ile yazılmıştır; kurulum, Rust, .NET, Electron veya ayrı bir yardımcı program gerektirmez.
+
+[**Son sürümü indir**](https://github.com/tahayasinaks/rs7-isik/releases/latest) · [65 efektin kataloğu](docs/EFEKT-KATALOGU.md) · [Test planı](docs/TEST-PLANI.md)
+
+![RS7 arayüzü](docs/images/rs7.png)
 
 ## Kullanım
 
-`RS7-Isik-v1.0.1-Windows-x64.exe` dosyasını açın. Önce eski RS7 Işık uygulamasını ve ATK HUB’ı tamamen kapatın. **Klavyeyi bağla → mod seç → Başlat** sırasını izleyin.
+1. Releases → **RS7-v1.1.0-Windows-x64.exe** dosyasını indirin. Kaynak ZIP'i veya eski Onizleme EXE'sini kullanmayın.
+2. Eski RS7 sürümünden tepsi simgesi → **Tamamen çık** ile çıkın; ATK HUB'ı kapatın.
+3. Klavyeyi USB ile bağlayın, uygulamada **Klavyeyi bağla** seçin.
+4. Bir efekt seçip **Başlat** seçin. Renk, hız ve parlaklık değişiklikleri çalışırken uygulanır.
+5. **X / küçült**: efekt sistem tepsisinde devam eder. **Tamamen çık**: akış kapanır, USB bırakılır.
 
-- **Hız:** 0.20×–3.00×; çalışan efekte anında uygulanır.
-- **Parlaklık:** %0–100.
-- **Renk düzeni:** Gökkuşağı, Tek renk veya İki renk geçişi.
-- **1. renk / 2. renk:** Windows renk seçicisini açar. Renk seçimi özel renk düzenini otomatik etkinleştirir. Sabit renk modu birinci rengi kullanır.
-- **Tuşa basınca dalga:** basılan tuştan yayılıp sönen, üst üste binebilen renkli halkalar.
-- **Deniz dalgası:** mavi/turkuaz deniz yüzeyi ve köpük gibi parlak dalga tepeleri. Hız ve özel renklerle ayarlanabilir.
-- **Ayarları hatırlama:** tam çıkışta mod, renk, hız ve parlaklık kaydedilir; açılışta geri yüklenir. USB bağlantısı ve başlatma kullanıcı kontrolünde kalır.
-- **Tek örnek:** ikinci açılış, mevcut pencereyi öne getirir.
-- **Küçültme:** USB iş parçacığı çalışmaya devam eder.
-- **X / küçültme:** sistem tepsisine gizler; efekt ve tuş dinleme devam eder. Simgeye tıklayarak geri açın. Sağ tık → Tamamen çık gerçek çıkıştır; akışı sonlandırır ve USB bağlantısını bırakır. Tepsi simgesi eklenemezse pencere gizlenmek yerine görev çubuğuna küçülür. Explorer yeniden başladığında simge geri eklenir.
+## Özellikler
 
-Özel efektler bilgisayarda hesaplanır. Uygulama tamamen kapalıyken özel animasyon devam etmez; klavye firmware’ine efekt yüklenmez. Fn algılanmaz. Windows fiziksel tuş olayları kullanıldığı için başka klavyeler de tetikleyebilir. Tuşlar diske yazılmaz veya internete gönderilmez. Yönetici olarak çalışan bazı uygulamalarda Windows erişim sınırları nedeniyle tuş algılama çalışmayabilir.
+- 65 Türkçe seçenek; arama, yedi kategori ve sayfalama.
+- Dalga, deniz dalgası, kalp şekli, tuşa duyarlı desenler, doğal ve geometrik animasyonlar.
+- Çok renk, tek renk ve iki renk geçişi; %0–100 parlaklık ve 0.20×–3.00× hız. Tek renkli dalga ve geometrik desenler parlaklık geçişiyle hareketini korur.
+- Windows ses çıkışına tepki (mikrofon açılmaz), birincil ekran renkleri, işlemci/bellek yükü ve saat.
+- Üst barda duruma göre değişen bağlantı ve başlat/durdur düğmeleri.
+- Şeffaf büyük logo, 81 tuşlu canlı çizim; #0b0b0c / #ffffff / #c6f432 paleti.
+- Tam çıkışta efekt/renk/hız/parlaklık kaydedilir; sonraki açılışta geri yüklenir. Bağlanma ve başlatma kullanıcının kontrolündedir.
+- Tek örnek, Explorer yeniden başlarsa tepsi simgesini geri ekleme; USB döngüsü arayüz çiziminden ayrıdır.
 
-## Mimari
+Bazı modlarda hız veya palet anlamlı değildir ve ilgili denetim pasiftir. Sabit renk birinci rengi kullanır. Ekran modları kendi ekran renklerini kullanır; parlaklık ayarlanabilir. Ses seviye çubukları kanal seviyesidir, frekans ekolayzırı değildir. CPU göstergesi yükü gösterir; sıcaklık ölçmez.
 
-`src/lighting.rs`: efekt, hız, palet ve parlaklık hesaplamaları; fiziksel tuş eşlemesi.
+## Doğrulama ve sınırlar
 
-`src/hardware.rs`: yalnızca RS7 Air’in doğrulanan USB kimlikleri ve `ff60/61` arabirimi; sürüm okuma ve RGB paketleri.
+21 otomatik Rust testi; efektlerin örnek çıktıları, parlaklık sınırı, tek renkte hareket, Türkçe arama, tuş/LED eşlemesi, USB paketleri, ayar kaydı ve gömülü logo yüklemesi için çalışır. Yerel Windows canlı kaynak entegrasyon testi ayrıca çalıştırılır; CI'da masaüstü/ses aygıtı gerektirdiği için varsayılan olarak atlanır.
 
-`src/worker.rs`: 60 kare/sn hedefleyen, mutlak zamanla çalışan tek USB sahibi. Gecikmiş kareler biriktirilmez. Ayarlar en son değer olarak okunur; tuş kuyruğu sınırlıdır. Arayüz çizimi USB döngüsünü sürmez.
+Fiziksel test cihazı USB 373b:1220 / firmware 2.02 kullanan RS7 Air'dir. Önceki sürümlerde bağlantı, tam çıkış ve X ile tepside kesintisiz devam etme doğrulandı. Yeni 65 seçeneğin tümü gerçek cihazda tek tek doğrulanmış değildir; [test planıyla](docs/TEST-PLANI.md) kontrol edebilirsiniz. Diğer firmware varyantları henüz fiziksel test edilmedi.
 
-`src/win_ui.rs`: doğrudan Windows kontrolleri, renk seçicisi, önizleme ve Rust içindeki düşük seviyeli tuş kancası.
+Animasyonlar bilgisayarda hesaplanır; tamamen çıkıştan sonra klavye firmware'ine özel efekt yüklenmiş olmaz. Fn algılanmaz; Windows tuş olayları kullanıldığından başka klavyeler de tepkiyi tetikleyebilir. Tuşlar, ses ve ekran örnekleri dosyaya/ağa yazılmaz. HDR, korumalı video veya özel ses kiplerinde canlı kaynak kısıtları olabilir; ayrıntılar katalogdadır.
+
+EXE dijital imzalı değildir. Proje ATK ile bağlantılı resmî bir ürün değildir.
 
 ## Derleme
 
-Windows ve Rust stable ile:
+Windows + Rust stable:
 
 ```text
 cargo test --locked
 cargo build --release --locked
 ```
 
-MSVC hedefi Windows SDK/Visual C++ build araçlarını; GNU hedefi uygun GNU bağlama araçlarını gerektirir. EXE: `target/release/rs7-isik.exe`. Çalıştırmak için Rust kurulması gerekmez.
+MSVC: Windows SDK / Visual C++ build araçları. C/C++ çalışma zamanı statik bağlanır. GNU: uygun GNU bağlama araçları ve ikon kaynağı için windres gerekir. Çıktı: target/release/rs7-isik.exe. Kullanıcı bilgisayarında derleme araçları gerekmez.
 
-## Doğrulama
+EXE adında Onizleme bulunursa veya --design-preview argümanı verilirse USB'siz tasarım modu açılır; canlı kaynaklar örnektir, ayarlar yazılmaz. Releases dosyası gerçek klavyeyi yöneten sürümdür.
 
-Hızın halka yarıçapına etkisi, özel renk ve parlaklık, halka yayılımı/sönmesi, tuş koordinatları, firmware yanıtı ve paket bölme ve ayar kaydı için 9 Rust testi vardır. Firmware 2.02 ve USB `373b:1220` kullanan RS7 Air’e yerel uygulamadan bağlantı kuruldu ve gönderim döngüsü çalıştırıldı. 0.3.0 testinde gerçek çıkıştan sonra ATK aydınlatmasının geri geldiği doğrulandı. v1.0.0 testinde kullanıcı, X ile tepsiye gizlendikten sonra Deniz dalgasının kesintisiz devam ettiğini doğruladı. Diğer firmware sürümleri henüz fiziksel test edilmedi.
+Kaynak: src/lighting.rs ve src/lighting/extended.rs efektler; src/hardware.rs HID; src/worker.rs gönderim; src/sources.rs canlı kaynaklar; src/win_ui.rs ve alt modüller arayüz. Eski Electron kaynakları tarihçe için korunur; Rust EXE bunları kullanmaz.
 
-Eski Electron sürümü kaynakları geçmişe uyumluluk için depoda durur; Rust EXE bunları kullanmaz. Önceki geliştirme notları: `docs/LEGACY-ELECTRON.md`. Proje ATK ile bağlantılı resmî bir ürün değildir. EXE dijital imzalı değildir.
+## Yayınlar
 
-## Yayın düzeni
-
-Sürümler v1.0.0, v1.0.1, v1.1.0, v2.0.0 biçiminde artar. [Yayınlama kılavuzu](docs/YAYINLAMA.md) ve [v1.0.0 notları](releases/v1.0.0.md). GitHub Actions sürümü doğrulayıp testleri çalıştırır, EXE/SHA-256 dosyalarını Releases bölümünde yayımlar. Önceki 0.x sürümleri geliştirme geçmişidir.
+Sürüm sırası v1.0.0 → v1.0.1 → **v1.1.0**. Her yayın EXE, SHA-256, Türkçe notlar ve kaynak etiketi içerir. [Yayınlama kılavuzu](docs/YAYINLAMA.md).

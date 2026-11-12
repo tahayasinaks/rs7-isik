@@ -1,0 +1,392 @@
+[
+  {
+    "id": 0,
+    "name": "Tuşa basınca dalga",
+    "category": 1,
+    "description": "Basılan tuştan dışarı doğru ince halkalar yayılır."
+  },
+  {
+    "id": 1,
+    "name": "Sürekli dalga",
+    "category": 2,
+    "description": "Renk şeridi klavyenin bir ucundan diğerine akar."
+  },
+  {
+    "id": 2,
+    "name": "Çapraz dalga",
+    "category": 2,
+    "description": "Dalga satır ve sütunlarda çapraz ilerler."
+  },
+  {
+    "id": 3,
+    "name": "Renk döngüsü",
+    "category": 0,
+    "description": "Bütün tuşlar renk tayfında birlikte dolaşır."
+  },
+  {
+    "id": 4,
+    "name": "Kutup ışıkları",
+    "category": 3,
+    "description": "Yumuşak renk perdeleri üst üste akar."
+  },
+  {
+    "id": 5,
+    "name": "Ateş",
+    "category": 3,
+    "description": "Alevler alttan yükselir ve düzensiz titreşir."
+  },
+  {
+    "id": 6,
+    "name": "Yağmur",
+    "category": 3,
+    "description": "Bağımsız damlalar sütunlardan aşağı süzülür."
+  },
+  {
+    "id": 7,
+    "name": "Yıldızlar",
+    "category": 3,
+    "description": "Dağınık ışık noktaları yavaşça belirip kaybolur."
+  },
+  {
+    "id": 8,
+    "name": "Nefes",
+    "category": 0,
+    "description": "Parlaklık yumuşakça artar ve azalır."
+  },
+  {
+    "id": 9,
+    "name": "Sabit renk",
+    "category": 0,
+    "description": "Seçilen birinci renk bütün tuşlarda sabit kalır."
+  },
+  {
+    "id": 10,
+    "name": "Kapalı",
+    "category": 0,
+    "description": "Uygulama bağlı kalır; bütün tuş ışıkları söner."
+  },
+  {
+    "id": 11,
+    "name": "Deniz dalgası",
+    "category": 3,
+    "description": "Geniş su dalgası ve ince köpük tepesi ilerler."
+  },
+  {
+    "id": 12,
+    "name": "Tek tuş sönümü",
+    "category": 1,
+    "description": "Yalnızca bastığınız tuş aydınlanır ve söner."
+  },
+  {
+    "id": 13,
+    "name": "Tuş artısı",
+    "category": 1,
+    "description": "Basılan tuşun satır ve sütununda ışık yayılır."
+  },
+  {
+    "id": 14,
+    "name": "Tuş alevi",
+    "category": 1,
+    "description": "Basılan tuştan yukarı doğru alev yükselir."
+  },
+  {
+    "id": 15,
+    "name": "Tuş patlaması",
+    "category": 1,
+    "description": "Basılan tuştan büyüyen dolu bir ışık alanı yayılır."
+  },
+  {
+    "id": 16,
+    "name": "Klavye tepkisi",
+    "category": 1,
+    "description": "Her tuş vuruşunda bütün klavye parlar ve söner."
+  },
+  {
+    "id": 17,
+    "name": "Yazım ısı haritası",
+    "category": 1,
+    "description": "Son vuruşlar birikir; sık basılan tuşlar daha parlak olur."
+  },
+  {
+    "id": 18,
+    "name": "Rastgele renk",
+    "category": 0,
+    "description": "Bütün klavye düzenli aralıklarla yeni bir renge geçer."
+  },
+  {
+    "id": 19,
+    "name": "Yanıp sönme",
+    "category": 0,
+    "description": "Bütün tuşlar aralıklı olarak açılıp kapanır."
+  },
+  {
+    "id": 20,
+    "name": "Çift flaş",
+    "category": 0,
+    "description": "Her döngüde iki kısa ışık darbesi oluşur."
+  },
+  {
+    "id": 21,
+    "name": "Kalp atışı",
+    "category": 0,
+    "description": "İki yumuşak darbeden sonra uzun bir bekleme gelir."
+  },
+  {
+    "id": 22,
+    "name": "Tek yön tarama",
+    "category": 2,
+    "description": "Dar bir ışık bandı bir yönde tarar; arkası söner."
+  },
+  {
+    "id": 23,
+    "name": "Gidip gelen tarayıcı",
+    "category": 2,
+    "description": "Işık bandı iki kenar arasında gidip gelir."
+  },
+  {
+    "id": 24,
+    "name": "Kuyruklu yıldız",
+    "category": 2,
+    "description": "Parlak bir baş ve sönümlenen kuyruk satırlarda ilerler."
+  },
+  {
+    "id": 25,
+    "name": "Işık kovalamacası",
+    "category": 2,
+    "description": "Aralıklı ışık grupları birbirini takip eder."
+  },
+  {
+    "id": 26,
+    "name": "Dolup boşalma",
+    "category": 2,
+    "description": "Tuş alanı adım adım dolar, sonra boşalır."
+  },
+  {
+    "id": 27,
+    "name": "Biriken bloklar",
+    "category": 2,
+    "description": "Hareketli bloklar kenarda üst üste birikir."
+  },
+  {
+    "id": 28,
+    "name": "Renk takası",
+    "category": 4,
+    "description": "İki dama grubu sırayla renklerini değiştirir."
+  },
+  {
+    "id": 29,
+    "name": "Renk çarkı",
+    "category": 4,
+    "description": "Renkler klavye merkezi çevresinde döner."
+  },
+  {
+    "id": 30,
+    "name": "Spiral",
+    "category": 4,
+    "description": "Dönerek dışarı açılan renk sarmalı oluşur."
+  },
+  {
+    "id": 31,
+    "name": "Merkezden halkalar",
+    "category": 4,
+    "description": "Merkezden dışarı doğru eş merkezli renk halkaları akar."
+  },
+  {
+    "id": 32,
+    "name": "Radar",
+    "category": 4,
+    "description": "Tek bir dar ışın merkez çevresinde tarar."
+  },
+  {
+    "id": 33,
+    "name": "Çapraz ışınlar",
+    "category": 4,
+    "description": "İki bağımsız ışık bandı birbirinin içinden geçer."
+  },
+  {
+    "id": 34,
+    "name": "Çift renk çarkı",
+    "category": 4,
+    "description": "İki merkezdeki renk çarkı ters yönlerde döner."
+  },
+  {
+    "id": 35,
+    "name": "Sıçrayan top",
+    "category": 4,
+    "description": "Tek bir ışık topu iki eksende sekerek hareket eder."
+  },
+  {
+    "id": 36,
+    "name": "Hareketli noktalar",
+    "category": 4,
+    "description": "Birden fazla ışık noktası bağımsız yörüngeler izler."
+  },
+  {
+    "id": 37,
+    "name": "Kabarcıklar",
+    "category": 3,
+    "description": "Yükselen boş ışık halkaları büyür ve kaybolur."
+  },
+  {
+    "id": 38,
+    "name": "Havai fişek",
+    "category": 3,
+    "description": "Farklı merkezlerden ışık parçacıkları patlar."
+  },
+  {
+    "id": 39,
+    "name": "Şimşek",
+    "category": 3,
+    "description": "Karanlık alan kısa ve düzensiz çatallanan flaşlarla parlar."
+  },
+  {
+    "id": 40,
+    "name": "Gün doğumu",
+    "category": 3,
+    "description": "Sıcak renkler aşağıdan yukarıya doğru yavaşça yükselir."
+  },
+  {
+    "id": 41,
+    "name": "Mum ışığı",
+    "category": 3,
+    "description": "Sıcak ve düşük parlaklıklı ışık yumuşakça titrer."
+  },
+  {
+    "id": 42,
+    "name": "Lav",
+    "category": 3,
+    "description": "Yavaş hareket eden parlak ve koyu sıcak lekeler oluşur."
+  },
+  {
+    "id": 43,
+    "name": "Plazma",
+    "category": 4,
+    "description": "Birbiriyle girişen sinüs alanları renkli desenler üretir."
+  },
+  {
+    "id": 44,
+    "name": "Gürültü bulutu",
+    "category": 3,
+    "description": "Yumuşak rastlantısal bulutlar hareket eder."
+  },
+  {
+    "id": 45,
+    "name": "Mozaik",
+    "category": 4,
+    "description": "Küçük renk blokları bağımsız aralıklarla yenilenir."
+  },
+  {
+    "id": 46,
+    "name": "Hareketli paneller",
+    "category": 4,
+    "description": "Geniş renk düzlemleri yatay ve dikey kayar."
+  },
+  {
+    "id": 47,
+    "name": "Fraktal akış",
+    "category": 4,
+    "description": "Çok ölçekli dalgalar kendini tekrar eden desenler üretir."
+  },
+  {
+    "id": 48,
+    "name": "Dama",
+    "category": 4,
+    "description": "Sabit ve dönüşümlü iki renkli kareler görünür."
+  },
+  {
+    "id": 49,
+    "name": "Nefes alan halka",
+    "category": 4,
+    "description": "Tek bir ışık halkasının çapı yumuşakça büyüyüp küçülür."
+  },
+  {
+    "id": 50,
+    "name": "Çiçeklenme",
+    "category": 4,
+    "description": "Merkezden açılan ışık yaprakları hareket eder."
+  },
+  {
+    "id": 51,
+    "name": "Girdap halkaları",
+    "category": 4,
+    "description": "İki merkez çevresinde bükülen halkalar döner."
+  },
+  {
+    "id": 52,
+    "name": "Yılan",
+    "category": 2,
+    "description": "Kuyruklu ışık izi tuşları satır satır dolaşır."
+  },
+  {
+    "id": 53,
+    "name": "Sesle parlaklık",
+    "category": 5,
+    "description": "Varsayılan ses çıkışının seviyesine göre bütün klavye parlar."
+  },
+  {
+    "id": 54,
+    "name": "Ses seviye çubukları",
+    "category": 5,
+    "description": "Sol ve sağ ses seviyeleri sütunlar halinde yükselir; frekans analizi değildir."
+  },
+  {
+    "id": 55,
+    "name": "Sesle dalga",
+    "category": 5,
+    "description": "Dalganın parlaklığı çalınan sesin seviyesine tepki verir."
+  },
+  {
+    "id": 56,
+    "name": "Sesle yıldızlar",
+    "category": 5,
+    "description": "Ses yükseldikçe daha fazla yıldız parlar."
+  },
+  {
+    "id": 57,
+    "name": "Ekran yansıtma",
+    "category": 5,
+    "description": "Birincil ekranın 15 × 6 renk haritası tuşlara yansır."
+  },
+  {
+    "id": 58,
+    "name": "Ekran ortam rengi",
+    "category": 5,
+    "description": "Birincil ekranın ortalama rengi bütün tuşlara uygulanır."
+  },
+  {
+    "id": 59,
+    "name": "İşlemci yükü",
+    "category": 6,
+    "description": "İşlemci kullanım oranı klavyede bir doluluk çubuğu oluşturur."
+  },
+  {
+    "id": 60,
+    "name": "Bellek doluluğu",
+    "category": 6,
+    "description": "Bellek kullanım oranı klavyede bir doluluk çubuğu oluşturur."
+  },
+  {
+    "id": 61,
+    "name": "Saat",
+    "category": 6,
+    "description": "Yerel saat ve dakika ışık noktalarıyla gösterilir."
+  },
+  {
+    "id": 62,
+    "name": "Sesle parti",
+    "category": 5,
+    "description": "Ses seviyesi renkli dama alanlarını aydınlatır."
+  },
+  {
+    "id": 63,
+    "name": "Sesle halkalar",
+    "category": 5,
+    "description": "Ses seviyesi merkezdeki halkanın boyutunu ve parlaklığını değiştirir."
+  },
+  {
+    "id": 64,
+    "name": "Kalp şekli",
+    "category": 4,
+    "description": "Tuş ışıkları kalp şeklinde yanar; kalp ritmi hız, renk ve parlaklığa uyar."
+  }
+]

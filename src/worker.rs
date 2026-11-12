@@ -1,6 +1,6 @@
 use crate::{
     hardware::Keyboard,
-    lighting::{position, render, Frame, Press, Settings},
+    lighting::{position, reactive, render_live, Frame, Press, Settings},
 };
 use std::{
     sync::atomic::{AtomicBool, Ordering},
@@ -26,6 +26,7 @@ pub struct Status {
     pub frame: Frame,
     pub fps: u32,
     pub close_error: Option<String>,
+    pub source_note: String,
 }
 impl Default for Status {
     fn default() -> Self {
@@ -36,6 +37,7 @@ impl Default for Status {
             frame: [[0; 3]; 90],
             fps: 0,
             close_error: None,
+            source_note: String::new(),
         }
     }
 }
@@ -80,6 +82,9 @@ fn message(status: &Arc<Mutex<Status>>, text: impl Into<String>, connected: bool
     state.message = text.into();
     state.connected = connected;
     state.running = running;
+    if !running {
+        state.source_note.clear();
+    }
 }
 fn blackout(device: &Option<Keyboard>) -> Result<(), String> {
     if let Some(d) = device {
@@ -94,6 +99,7 @@ fn run(
     settings: Arc<Mutex<Settings>>,
     status: Arc<Mutex<Status>>,
 ) {
+    let sources = crate::sources::Sources::new();
     let mut device: Option<Keyboard> = None;
     let mut running = false;
     let mut presses = Vec::new();
@@ -196,13 +202,13 @@ fn run(
             }
         }
         let s = settings.lock().unwrap().clone();
-        CAPTURE.store(running && s.effect == 0, Ordering::Relaxed);
+        CAPTURE.store(running && reactive(s.effect), Ordering::Relaxed);
         if s.effect != last_effect {
             presses.clear();
             last_effect = s.effect;
         }
         while let Ok((scan, when)) = keys.try_recv() {
-            if running && s.effect == 0 {
+            if running && reactive(s.effect) {
                 if let Some((x, y)) = position(scan) {
                     if presses.len() == 32 {
                         presses.remove(0);
@@ -215,6 +221,7 @@ fn run(
                 }
             }
         }
+        sources.select(if running { Some(s.effect) } else { None });
         if !running {
             continue;
         }
@@ -226,13 +233,15 @@ fn run(
         last = now;
         let seconds = now.duration_since(epoch).as_secs_f32();
         presses.retain(|p| seconds - p.time < 11.);
-        let frame = render(&s, phase, seconds, &presses);
+        let live = sources.read();
+        let frame = render_live(&s, phase, seconds, &presses, &live.input);
         let result = device.as_ref().unwrap().write(&frame);
         match result {
             Ok(()) => {
                 frames += 1;
                 let mut state = status.lock().unwrap();
                 state.frame = frame;
+                state.source_note = live.note;
                 if measure.elapsed() >= Duration::from_secs(1) {
                     state.fps = (frames as f32 / measure.elapsed().as_secs_f32()).round() as u32;
                     frames = 0;

@@ -1,4 +1,4 @@
-use std::ptr::{null, null_mut};
+use std::ptr::null;
 use windows_sys::Win32::{
     Foundation::*,
     UI::{Shell::*, WindowsAndMessaging::*},
@@ -25,11 +25,8 @@ impl Tray {
         data.uID = 1;
         data.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
         data.uCallbackMessage = MESSAGE;
-        data.hIcon = LoadIconW(null_mut(), IDI_APPLICATION);
-        let tip = wide(&format!(
-            "RS7 Işık v{} — Açmak için tıklayın",
-            env!("CARGO_PKG_VERSION")
-        ));
+        data.hIcon = crate::brand::icon(32);
+        let tip = wide(&format!("{} — Açmak için tıklayın", crate::brand::NAME));
         for (dest, src) in data.szTip.iter_mut().zip(tip) {
             *dest = src;
         }
