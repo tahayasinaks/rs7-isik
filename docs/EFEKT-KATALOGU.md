@@ -1,6 +1,6 @@
 # Türkçe efekt kataloğu — 66 seçenek
 
-Araştırma tarihi: 13 Kasım 2026. Sürüm: 1.1.2.
+Araştırma tarihi: 13 Kasım 2026. Sürüm: 1.2.0.
 
 Bu katalog, yaygın RGB yazılımlarının belgelenmiş davranışlarını karşılaştırır. Marka adları yerine davranışa göre Türkçe adlar kullanılır. Bütün animasyon hesaplamaları bu proje için Rust ile yazıldı; üretici yazılımı veya ücretli efekt dosyaları pakete alınmadı. Üreticinin birebir görsel çıktısını veya belirli bir firmware efektini kopyalama iddiası yoktur.
 
@@ -102,7 +102,7 @@ Yalnızca farklı ad taşıyan aynı temel hareket için ek bir mod oluşturulma
 | 62 | Sesle parti | Ses ve ekran | Ses seviyesi renkli dama alanlarını aydınlatır. |
 | 63 | Sesle halkalar | Ses ve ekran | Ses seviyesi merkezdeki halkanın boyutunu ve parlaklığını değiştirir. |
 
-| 64 | Kalp şekli | Geometri | Tuş ışıkları kalp silueti oluşturur; ritim, renk ve parlaklık ayarlanabilir. |
+| 64 | Kalp şekli | Geometri | Referanstaki 24 tuş kırmızı kalp oluşturur; F7 karanlık, uç N tuşudur. Hız ve parlaklık ayarlanabilir. |
 
 ## Canlı kaynaklar ve kontroller
 

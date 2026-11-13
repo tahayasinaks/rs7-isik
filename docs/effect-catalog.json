@@ -387,7 +387,7 @@
     "id": 64,
     "name": "Kalp şekli",
     "category": 4,
-    "description": "Tuş ışıkları kalp şeklinde yanar; kalp ritmi hız, renk ve parlaklığa uyar."
+    "description": "Seçilen 24 tuş kırmızı kalp oluşturur; F7 karanlık, uç N tuşudur. Hız ve parlaklık ayarlanır."
   },
   {
     "id": 65,

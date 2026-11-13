@@ -8,6 +8,7 @@ mod preferences;
 mod sources;
 mod startup;
 mod tray;
+mod updates;
 mod win_ui;
 mod worker;
 fn main() {

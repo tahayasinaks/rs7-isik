@@ -58,7 +58,7 @@ impl Layout {
         let cw = (lw - 32 - 12 * (cols - 1)) / cols;
         let card_height = ((cw - 24) as f32 * 48. / 200. + 62. * scale).ceil() as i32;
         let lh = ((100. * scale) as i32 + rows * (card_height + 12) + (42. * scale) as i32)
-            .max((398. * scale) as i32);
+            .max((480. * scale) as i32);
         let library = Area {
             x: 24,
             y: top + hero.h + 20,
@@ -73,7 +73,7 @@ impl Layout {
                 library.y
             },
             w: if narrow { w - 48 } else { sw },
-            h: if narrow { (398. * scale) as i32 } else { lh },
+            h: if narrow { (480. * scale) as i32 } else { lh },
         };
         let content = (library.y + library.h).max(settings.y + settings.h) + 42;
         Self {
@@ -172,6 +172,7 @@ pub unsafe fn apply(hwnd: HWND, s: &Ui) {
                 FIRST,
                 SECOND,
                 AUTOSTART,
+                UPDATE,
             ] {
                 SendMessageW(GetDlgItem(hwnd, id), WM_SETFONT, font as usize, 0);
             }
@@ -243,6 +244,13 @@ pub unsafe fn apply(hwnd: HWND, s: &Ui) {
         GetDlgItem(hwnd, AUTOSTART),
         x + q(26),
         y + q(320),
+        q(310),
+        q(40),
+    );
+    mov(
+        GetDlgItem(hwnd, UPDATE),
+        x + q(26),
+        y + q(400),
         q(310),
         q(40),
     );

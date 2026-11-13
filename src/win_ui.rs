@@ -37,6 +37,7 @@ const CATEGORY_FILTER: i32 = 208;
 const PREVIOUS: i32 = 209;
 const NEXT: i32 = 210;
 const AUTOSTART: i32 = 213;
+const UPDATE: i32 = 214;
 const TBM_GETPOS: u32 = WM_USER;
 struct Ui {
     worker: Worker,
@@ -59,6 +60,11 @@ struct Ui {
     hovered: std::cell::Cell<i32>,
     scroll: std::cell::Cell<i32>,
     autostart: std::cell::Cell<bool>,
+    updates: crate::updates::Shared,
+    update_caption: RefCell<String>,
+    notified_version: RefCell<String>,
+    saved_settings: RefCell<lighting::Settings>,
+    pending_settings: RefCell<Option<(lighting::Settings, Instant)>>,
 }
 fn wide(text: &str) -> Vec<u16> {
     text.encode_utf16().chain(Some(0)).collect()
@@ -302,13 +308,42 @@ unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, w: WPARAM, l: LPARAM) ->
         }
         WM_COMMAND => {
             let id = (w & 0xffff) as i32;
+            if id == UPDATE {
+                if state.preview {
+                    MessageBoxW(
+                        hwnd,
+                        wide("Önizlemede indirme veya kurulum yapılmaz.").as_ptr(),
+                        wide("RS7 Light · Güncelleme").as_ptr(),
+                        MB_OK,
+                    );
+                    return 0;
+                }
+                let value = state.updates.lock().unwrap().clone();
+                match value {
+                    crate::updates::State::Available(r) => {
+                        crate::updates::download(state.updates.clone(), r)
+                    }
+                    crate::updates::State::Current | crate::updates::State::Error(_) => {
+                        crate::updates::check(state.updates.clone())
+                    }
+                    _ => {}
+                }
+                return 0;
+            }
             if id == AUTOSTART {
                 let next = !state.autostart.get();
                 if state.preview {
                     state.autostart.set(next);
                 } else {
-                    match crate::startup::set(next) {
-                        Ok(()) => state.autostart.set(next),
+                    match crate::preferences::save(&state.worker.settings.lock().unwrap())
+                        .and_then(|_| crate::startup::set(next))
+                    {
+                        Ok(()) => {
+                            state.autostart.set(next);
+                            if next {
+                                let _ = state.worker.command.send(Command::AutoStart);
+                            }
+                        }
                         Err(error) => {
                             MessageBoxW(
                                 hwnd,
@@ -482,6 +517,7 @@ unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, w: WPARAM, l: LPARAM) ->
             0
         }
         WM_TIMER if state.preview => {
+            update_ui(hwnd, state);
             if IsWindowVisible(hwnd) != 0 && IsIconic(hwnd) == 0 {
                 let mut hero = responsive::current(hwnd, state).hero.rect();
                 OffsetRect(&mut hero, 0, -state.scroll.get());
@@ -491,6 +527,8 @@ unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, w: WPARAM, l: LPARAM) ->
             0
         }
         WM_TIMER => {
+            persist_changes(state);
+            update_ui(hwnd, state);
             let status = state.worker.status.lock().unwrap();
             let label = format!(
                 "{}  {}  {}",
@@ -642,6 +680,7 @@ pub fn run() {
         InitCommonControlsEx(&controls);
 
         let worker = Worker::new();
+        let saved_settings = worker.settings.lock().unwrap().clone();
 
         let _ = KEYS.set(worker.keys.clone());
         let font = CreateFontW(
@@ -661,6 +700,15 @@ pub fn run() {
             wide("Segoe UI").as_ptr(),
         );
         let mut ui = Box::new(Ui {
+            saved_settings: RefCell::new(saved_settings),
+            pending_settings: RefCell::new(None),
+            updates: std::sync::Arc::new(std::sync::Mutex::new(if preview {
+                crate::updates::State::Current
+            } else {
+                crate::updates::State::Checking
+            })),
+            update_caption: RefCell::new(String::new()),
+            notified_version: RefCell::new(String::new()),
             worker,
             preview,
             started: Instant::now(),
@@ -717,7 +765,7 @@ pub fn run() {
         );
         if preview {
             let mut s = ui.worker.settings.lock().unwrap();
-            s.effect = 65;
+            s.effect = 64;
             s.speed = 1.0;
             s.palette = 2;
             s.brightness = 0.8;
@@ -727,7 +775,7 @@ pub fn run() {
 
         build(hwnd, &mut ui);
         if preview {
-            text(GetDlgItem(hwnd, SEARCH), "tsunami");
+            text(GetDlgItem(hwnd, SEARCH), "kalp şekli");
             theme::refresh_library(hwnd, &ui);
         }
 
@@ -758,6 +806,12 @@ pub fn run() {
             );
         }
 
+        if !preview {
+            if ui.autostart.get() {
+                let _ = ui.worker.command.send(Command::AutoStart);
+            }
+            crate::updates::check(ui.updates.clone());
+        }
         let maximized = responsive::restore_window(hwnd, &ui);
         responsive::apply(hwnd, &ui);
         ShowWindow(hwnd, if maximized { SW_SHOWMAXIMIZED } else { SW_SHOW });
@@ -780,6 +834,89 @@ pub fn run() {
         DeleteObject(font);
         if !mutex.is_null() {
             CloseHandle(mutex);
+        }
+    }
+}
+fn persist_changes(s: &Ui) {
+    let settings = s.worker.settings.lock().unwrap().clone();
+    if settings == *s.saved_settings.borrow() {
+        s.pending_settings.borrow_mut().take();
+        return;
+    }
+    let mut pending = s.pending_settings.borrow_mut();
+    match pending.as_mut() {
+        Some((value, at)) if *value == settings => {
+            if at.elapsed() >= std::time::Duration::from_millis(750) {
+                match crate::preferences::save(&settings) {
+                    Ok(()) => {
+                        *s.saved_settings.borrow_mut() = settings;
+                        *pending = None;
+                    }
+                    Err(_) => {
+                        *at = Instant::now();
+                    }
+                }
+            }
+        }
+        _ => *pending = Some((settings, Instant::now())),
+    }
+}
+unsafe fn update_ui(hwnd: HWND, s: &Ui) {
+    use crate::updates::State;
+    let value = s.updates.lock().unwrap().clone();
+    if let State::Available(r) = &value {
+        if !s.preview && *s.notified_version.borrow() != r.version {
+            *s.notified_version.borrow_mut() = r.version.clone();
+            if MessageBoxW(hwnd,wide(&format!("RS7 Light v{} sürümü hazır.\n\nKurulum dosyası indirilip doğrulanacak. Ayarların korunarak güncellenecek. Şimdi indir ve kur?",r.version)).as_ptr(),wide("RS7 Light · Güncelleme mevcut").as_ptr(),MB_YESNO|MB_ICONINFORMATION)==IDYES {crate::updates::download(s.updates.clone(),r.clone());}
+        }
+    }
+    let (caption, enabled) = match &value {
+        State::Checking => ("Güncelleme kontrol ediliyor…".into(), false),
+        State::Current => (
+            if s.preview {
+                "Güncelleme · Önizleme".into()
+            } else {
+                format!("v{} · Güncellemeleri kontrol et", env!("CARGO_PKG_VERSION"))
+            },
+            true,
+        ),
+        State::Available(r) => (format!("v{} · İndir ve kur", r.version), true),
+        State::Downloading(p) => (format!("Güncelleme indiriliyor · %{p}"), false),
+        State::Ready(_) | State::Installing => ("Kurulum başlatılıyor…".into(), false),
+        State::Error(e) => {
+            let _ = e;
+            ("Kontrol edilemedi · Tekrar dene".into(), true)
+        }
+    };
+    if caption != *s.update_caption.borrow() {
+        text(GetDlgItem(hwnd, UPDATE), &caption);
+        EnableWindow(GetDlgItem(hwnd, UPDATE), enabled as i32);
+        *s.update_caption.borrow_mut() = caption;
+    }
+    if let State::Ready(path) = value {
+        if !s.preview {
+            *s.updates.lock().unwrap() = State::Installing;
+            if let Err(e) = crate::preferences::save(&s.worker.settings.lock().unwrap()) {
+                *s.updates.lock().unwrap() = State::Error(format!("Ayarlar kaydedilemedi: {e}"));
+                return;
+            }
+            match std::process::Command::new(&path)
+                .arg(format!("/UPDATEPID={}", std::process::id()))
+                .spawn()
+            {
+                Ok(_) => {
+                    PostMessageW(hwnd, tray::EXIT, 0, 0);
+                }
+                Err(e) => {
+                    *s.updates.lock().unwrap() = State::Error(format!("Kurulum açılamadı: {e}"));
+                    MessageBoxW(
+                        hwnd,
+                        wide(&format!("Kurulum açılamadı: {e}")).as_ptr(),
+                        wide("RS7 Light · Güncelleme").as_ptr(),
+                        MB_OK | MB_ICONERROR,
+                    );
+                }
+            }
         }
     }
 }

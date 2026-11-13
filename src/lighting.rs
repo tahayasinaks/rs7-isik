@@ -148,7 +148,7 @@ pub const DESCRIPTIONS: [&str; 66] = [
     "Yerel saat ve dakika ışık noktalarıyla gösterilir.",
     "Ses seviyesi renkli dama alanlarını aydınlatır.",
     "Ses seviyesi merkezdeki halkanın boyutunu ve parlaklığını değiştirir.",
-    "Tuş ışıkları kalp şeklinde yanar; kalp ritmi hız, renk ve parlaklığa uyar.",
+    "Seçilen 24 tuş kırmızı kalp oluşturur; F7 karanlık, uç N tuşudur. Hız ve parlaklık ayarlanır.",
     "Basılan tuştan tam boy dik dalga karşı kenara ilerler; sol tuşlar sağa, sağ tuşlar sola akar.",
 ];
 pub fn reactive(effect: usize) -> bool {

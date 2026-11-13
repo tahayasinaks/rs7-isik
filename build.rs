@@ -115,10 +115,10 @@ fn main() {
         dword(&mut fixed, v);
     }
     let strings = [
-        ("FileDescription", "RS7"),
-        ("ProductName", "RS7"),
+        ("FileDescription", "RS7 Light"),
+        ("ProductName", "RS7 Light"),
         ("InternalName", "RS7"),
-        ("OriginalFilename", "RS7.exe"),
+        ("OriginalFilename", "RS7 Light.exe"),
         ("FileVersion", version.as_str()),
         ("ProductVersion", version.as_str()),
     ]
@@ -131,7 +131,7 @@ fn main() {
     let vars = block("VarFileInfo", 1, &[], &[translation]);
     let info = block("VS_VERSION_INFO", 0, &fixed, &[string_info, vars]);
     resource(&mut res, 16, 1, &info);
-    let manifest=br#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?><assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0"><assemblyIdentity version="1.1.0.0" name="RS7" type="win32"/><description>RS7</description><dependency><dependentAssembly><assemblyIdentity type="win32" name="Microsoft.Windows.Common-Controls" version="6.0.0.0" processorArchitecture="*" publicKeyToken="6595b64144ccf1df" language="*"/></dependentAssembly></dependency><trustInfo xmlns="urn:schemas-microsoft-com:asm.v3"><security><requestedPrivileges><requestedExecutionLevel level="asInvoker" uiAccess="false"/></requestedPrivileges></security></trustInfo></assembly>"#;
+    let manifest=br#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?><assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0"><assemblyIdentity version="1.1.0.0" name="RS7" type="win32"/><description>RS7 Light</description><dependency><dependentAssembly><assemblyIdentity type="win32" name="Microsoft.Windows.Common-Controls" version="6.0.0.0" processorArchitecture="*" publicKeyToken="6595b64144ccf1df" language="*"/></dependentAssembly></dependency><trustInfo xmlns="urn:schemas-microsoft-com:asm.v3"><security><requestedPrivileges><requestedExecutionLevel level="asInvoker" uiAccess="false"/></requestedPrivileges></security></trustInfo></assembly>"#;
     resource(&mut res, 24, 1, manifest);
     let out = PathBuf::from(env::var_os("OUT_DIR").unwrap());
     let file = out.join("rs7.res");

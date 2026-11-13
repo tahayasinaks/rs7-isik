@@ -245,6 +245,16 @@ pub unsafe fn build(hwnd: HWND, s: &mut Ui) {
         310,
         40,
     );
+    btn(
+        hwnd,
+        s,
+        UPDATE,
+        "Güncellemeleri kontrol et",
+        790,
+        884,
+        310,
+        40,
+    );
     refresh_library(hwnd, s);
     mode_controls(hwnd, s);
     sync_actions(hwnd, s);
@@ -419,7 +429,7 @@ unsafe fn button_contents(s: &Ui, d: &DRAWITEMSTRUCT) {
             || palette
             || matches!(
                 id,
-                FIRST | SECOND | PREVIOUS | NEXT | CATEGORY_FILTER | AUTOSTART
+                FIRST | SECOND | PREVIOUS | NEXT | CATEGORY_FILTER | AUTOSTART | UPDATE
             )
         {
             PANEL
@@ -589,7 +599,8 @@ pub unsafe fn paint(hwnd: HWND, s: &Ui) {
         null_mut(),
         DI_NORMAL,
     );
-    label(dc, "RS7", 124, 33, 40, WHITE, true);
+    label(dc, "RS7", 124, 25, 36, WHITE, true);
+    label(dc, "LIGHT", 126, 68, 12, LIME, true);
     rect(dc, 228, 32, 1, 50, LINE, LINE, 0);
     label(dc, "ATK RS7 Air", 252, 38, 16, WHITE, true);
     label(
@@ -804,10 +815,14 @@ pub unsafe fn paint(hwnd: HWND, s: &Ui) {
         DeleteObject(font);
     }
     label(dc, "Renk seçimi", 790, 679, 12, MUTED, false);
-    if matches!(settings.effect, 10 | 57 | 58) || (settings.palette == 0 && settings.effect != 9) {
+    if matches!(settings.effect, 10 | 57 | 58 | 64)
+        || (settings.palette == 0 && settings.effect != 9)
+    {
         label(
             dc,
-            if settings.effect == 10 {
+            if settings.effect == 64 {
+                "Kalp bu modda kırmızı yanar."
+            } else if settings.effect == 10 {
                 "Bu modda ışıklar kapalı."
             } else if matches!(settings.effect, 57 | 58) {
                 "Renkler ekranından alınır."
@@ -827,7 +842,7 @@ pub unsafe fn paint(hwnd: HWND, s: &Ui) {
         if s.preview {
             "Önizleme: Windows ayarı değişmez."
         } else {
-            "Oturum açıldığında RS7 açılır."
+            "Son ayarlarla otomatik bağlanır ve başlar."
         },
         790,
         850,
@@ -933,11 +948,11 @@ pub unsafe fn mode_controls(hwnd: HWND, s: &Ui) {
     let effect = settings.effect;
     let speed = !matches!(effect, 9 | 10 | 48 | 53 | 54 | 57 | 58 | 59 | 60 | 61);
     EnableWindow(GetDlgItem(hwnd, SPEED), speed as i32);
-    let palette = !matches!(effect, 9 | 10 | 57 | 58);
+    let palette = !matches!(effect, 9 | 10 | 57 | 58 | 64);
     for id in 600..603 {
         EnableWindow(GetDlgItem(hwnd, id), palette as i32);
     }
-    let custom = !matches!(effect, 10 | 57 | 58) && (effect == 9 || settings.palette != 0);
+    let custom = !matches!(effect, 10 | 57 | 58 | 64) && (effect == 9 || settings.palette != 0);
     visibility(s.first, custom);
     visibility(s.second, custom && effect != 9 && settings.palette == 2);
     EnableWindow(s.first, custom as i32);
