@@ -1,0 +1,51 @@
+name: RS7 Light Setup Preview
+on:
+  push:
+    branches: ['preview/setup-updater']
+permissions:
+  contents: read
+jobs:
+  setup:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cargo test --locked
+      - run: cargo build --release --locked
+      - name: Build and test setup
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $metadata = cargo metadata --no-deps --format-version 1 --locked | ConvertFrom-Json
+          $version = ($metadata.packages | Where-Object name -eq 'rs7-isik').version
+          if (!(Test-Path 'C:/Program Files (x86)/NSIS/makensis.exe')) {
+            choco install nsis --yes --no-progress
+            if ($LASTEXITCODE -ne 0) { throw 'NSIS could not be installed' }
+          }
+          New-Item -ItemType Directory -Force artifacts | Out-Null
+          $setup = Join-Path $PWD "artifacts/RS7-Light-v$version-Setup-x64.exe"
+          & 'C:/Program Files (x86)/NSIS/makensis.exe' "/DVERSION=$version" "/DOUTPUT=$setup" installer/RS7Light.nsi
+          if ($LASTEXITCODE -ne 0) { throw 'Setup compilation failed' }
+          $testDir = Join-Path $env:RUNNER_TEMP 'RS7-Light-Setup-Smoke'
+          $process = Start-Process -FilePath $setup -ArgumentList @('/S','/TESTMODE',"/D=$testDir") -Wait -PassThru
+          if ($process.ExitCode -ne 0) { throw 'Setup smoke test failed' }
+          $installed = Join-Path $testDir 'RS7 Light.exe'
+          if (!(Test-Path $installed)) { throw 'Installed app missing' }
+          if ((Get-FileHash $installed).Hash -ne (Get-FileHash target/release/rs7-isik.exe).Hash) { throw 'Installed app mismatch' }
+          if (!(Test-Path (Join-Path $testDir 'Uninstall.exe'))) { throw 'Uninstaller missing' }
+          # Installing the same version again exercises the in-place upgrade path.
+          $process = Start-Process -FilePath $setup -ArgumentList @('/S','/TESTMODE',"/D=$testDir") -Wait -PassThru
+          if ($process.ExitCode -ne 0) { throw 'Setup upgrade smoke test failed' }
+          $un = Start-Process -FilePath (Join-Path $testDir 'Uninstall.exe') -ArgumentList @('/S','/TESTMODE') -Wait -PassThru
+          for ($i=0; $i -lt 30 -and (Test-Path $installed); $i++) { Start-Sleep -Milliseconds 200 }
+          if (Test-Path $installed) { throw 'Uninstall smoke test failed' }
+          Copy-Item target/release/rs7-isik.exe "artifacts/RS7-Light-v$version-Windows-x64.exe"
+          Copy-Item LICENSE artifacts/LICENSE.txt
+          Copy-Item docs/RS7-LIGHT-KURULUM.md artifacts/KURULUM.md
+          Get-ChildItem artifacts -File | Sort-Object Name | ForEach-Object {
+            "$((Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant())  $($_.Name)"
+          } | Set-Content artifacts/SHA256SUMS.txt -Encoding ascii
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RS7-Light-Setup-Preview
+          path: artifacts/*
+          if-no-files-found: error

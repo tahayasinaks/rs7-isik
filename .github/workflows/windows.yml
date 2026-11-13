@@ -46,6 +46,18 @@ jobs:
           "TAG=v$version" >> $env:GITHUB_ENV
       - run: cargo test --locked
       - run: cargo build --release --locked
+      - name: NSIS kurulumunu derle
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if (!(Test-Path 'C:/Program Files (x86)/NSIS/makensis.exe')) {
+            choco install nsis --yes --no-progress
+            if ($LASTEXITCODE -ne 0) { throw 'NSIS kurulamadı.' }
+          }
+          New-Item -ItemType Directory -Force release-artifacts | Out-Null
+          $output = Join-Path $PWD "release-artifacts/RS7-Light-v$env:VERSION-Setup-x64.exe"
+          & 'C:/Program Files (x86)/NSIS/makensis.exe' "/DVERSION=$env:VERSION" "/DOUTPUT=$output" installer/RS7Light.nsi
+          if ($LASTEXITCODE -ne 0) { throw 'Setup derlenemedi.' }
       - name: Yayın dosyalarını hazırla
         shell: pwsh
         run: |

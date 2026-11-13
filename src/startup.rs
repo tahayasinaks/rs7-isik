@@ -18,7 +18,10 @@ fn command(path: &std::path::Path) -> io::Result<Vec<u16>> {
             "Geçersiz uygulama yolu.",
         ));
     }
-    let result: Vec<u16> = std::iter::once(34).chain(raw).chain([34, 0]).collect();
+    let result: Vec<u16> = std::iter::once(34)
+        .chain(raw)
+        .chain("\" --autostart\0".encode_utf16())
+        .collect();
     if result.len() > 260 {
         return Err(io::Error::new(io::ErrorKind::InvalidInput,"Windows başlangıç kaydı için dosya yolu çok uzun. RS7'yi daha kısa bir klasör yoluna taşıyın."));
     }
@@ -162,7 +165,7 @@ mod tests {
         let c = command(p).unwrap();
         assert_eq!(
             String::from_utf16(&c[..c.len() - 1]).unwrap(),
-            "\"C:\\Uygulamalar\\Türkçe RS7\\RS7.exe\""
+            "\"C:\\Uygulamalar\\Türkçe RS7\\RS7.exe\" --autostart"
         );
         assert_eq!(c.last(), Some(&0));
         assert!(command(std::path::Path::new("relative.exe")).is_err());

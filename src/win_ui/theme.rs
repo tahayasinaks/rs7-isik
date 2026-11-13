@@ -245,6 +245,16 @@ pub unsafe fn build(hwnd: HWND, s: &mut Ui) {
         310,
         40,
     );
+    btn(
+        hwnd,
+        s,
+        UPDATE,
+        "Güncellemeleri kontrol et",
+        790,
+        884,
+        310,
+        40,
+    );
     refresh_library(hwnd, s);
     mode_controls(hwnd, s);
     sync_actions(hwnd, s);
@@ -419,7 +429,7 @@ unsafe fn button_contents(s: &Ui, d: &DRAWITEMSTRUCT) {
             || palette
             || matches!(
                 id,
-                FIRST | SECOND | PREVIOUS | NEXT | CATEGORY_FILTER | AUTOSTART
+                FIRST | SECOND | PREVIOUS | NEXT | CATEGORY_FILTER | AUTOSTART | UPDATE
             )
         {
             PANEL
@@ -589,7 +599,8 @@ pub unsafe fn paint(hwnd: HWND, s: &Ui) {
         null_mut(),
         DI_NORMAL,
     );
-    label(dc, "RS7", 124, 33, 40, WHITE, true);
+    label(dc, "RS7", 124, 25, 36, WHITE, true);
+    label(dc, "LIGHT", 126, 68, 12, LIME, true);
     rect(dc, 228, 32, 1, 50, LINE, LINE, 0);
     label(dc, "ATK RS7 Air", 252, 38, 16, WHITE, true);
     label(
@@ -827,7 +838,7 @@ pub unsafe fn paint(hwnd: HWND, s: &Ui) {
         if s.preview {
             "Önizleme: Windows ayarı değişmez."
         } else {
-            "Oturum açıldığında RS7 açılır."
+            "Son ayarlarla otomatik bağlanır ve başlar."
         },
         790,
         850,

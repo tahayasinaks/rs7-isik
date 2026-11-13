@@ -1,6 +1,6 @@
 use std::ptr::null;
 use windows_sys::Win32::{System::LibraryLoader::GetModuleHandleW, UI::WindowsAndMessaging::*};
-pub const NAME: &str = "RS7";
+pub const NAME: &str = "RS7 Light";
 /// Shared, embedded multi-resolution icon; Windows owns this handle.
 pub unsafe fn icon(size: i32) -> HICON {
     LoadImageW(

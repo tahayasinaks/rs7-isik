@@ -1,10 +1,14 @@
-# RS7
+# RS7 Light
 
 ATK RS7 Air için Türkçe, yerel Windows RGB uygulaması. Rust ile yazılmıştır; kurulum, Rust, .NET, Electron veya ayrı bir yardımcı program gerektirmez.
 
 [**Son sürümü indir**](https://github.com/tahayasinaks/rs7-isik/releases/latest) · [66 efektin kataloğu](docs/EFEKT-KATALOGU.md) · [Test planı](docs/TEST-PLANI.md)
 
 ![RS7 arayüzü](docs/images/rs7.png)
+
+## RS7 Light kurulum önizlemesi
+
+Kurulum ve uygulama içinden doğrulanan güncelleme desteği `preview/setup-updater` dalında hazırlanıyor. Otomatik başlangıç artık son ayarlarla bağlanma ve efekt başlatmayı da kapsar. [Kurulum/güncelleme ayrıntıları](docs/RS7-LIGHT-KURULUM.md). Kararlı v1.1.3 aşağıdaki indirme bağlantısında korunur.
 
 ## Kullanım
 

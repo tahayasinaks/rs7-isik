@@ -14,6 +14,7 @@ use std::{
 pub static CAPTURE: AtomicBool = AtomicBool::new(false);
 pub enum Command {
     Connect,
+    AutoStart,
     Start,
     Stop,
     Disconnect,
@@ -111,6 +112,8 @@ fn run(
     let mut frames = 0;
     let mut measure = next;
     let mut last_effect = 0;
+    let mut auto_left = 0u32;
+    let mut auto_next = Instant::now();
     loop {
         let timeout = if running {
             next.saturating_duration_since(Instant::now())
@@ -123,7 +126,14 @@ fn run(
             Err(_) => Some(Command::Exit),
         };
         if let Some(cmd) = cmd {
+            if !matches!(cmd, Command::AutoStart) {
+                auto_left = 0;
+            }
             match cmd {
+                Command::AutoStart => {
+                    auto_left = 60;
+                    auto_next = Instant::now();
+                }
                 Command::Connect => {
                     running = false;
                     CAPTURE.store(false, Ordering::Relaxed);
@@ -198,6 +208,45 @@ fn run(
                     state.frame = [[0; 3]; 90];
                     state.close_error = result.err();
                     break;
+                }
+            }
+        }
+        if auto_left > 0 && !running && Instant::now() >= auto_next {
+            auto_left -= 1;
+            auto_next = Instant::now() + Duration::from_secs(2);
+            if device.is_none() {
+                match Keyboard::connect() {
+                    Ok(d) => device = Some(d),
+                    Err(e) => message(
+                        &status,
+                        format!("Otomatik bağlantı bekleniyor ({auto_left}): {e}"),
+                        false,
+                        false,
+                    ),
+                }
+            }
+            if let Some(d) = &device {
+                match d.start() {
+                    Ok(()) => {
+                        running = true;
+                        auto_left = 0;
+                        presses.clear();
+                        while keys.try_recv().is_ok() {}
+                        last = Instant::now();
+                        next = last;
+                        frames = 0;
+                        measure = last;
+                        message(&status, "Son ayarlarla otomatik başlatıldı.", true, true);
+                    }
+                    Err(e) => {
+                        message(
+                            &status,
+                            format!("Otomatik başlatma bekleniyor: {e}"),
+                            true,
+                            false,
+                        );
+                        device = None;
+                    }
                 }
             }
         }
