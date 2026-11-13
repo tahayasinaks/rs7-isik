@@ -1,4 +1,4 @@
-Unicode true
+﻿Unicode true
 !include "MUI2.nsh"
 !include "FileFunc.nsh"
 !include "LogicLib.nsh"
@@ -79,7 +79,7 @@ FunctionEnd
 Section "RS7 Light" Main
   SetOutPath "$INSTDIR"
   ClearErrors
-  File /oname="RS7 Light.exe" "${APP_EXE}"
+  File "/oname=RS7 Light.exe" "${APP_EXE}"
   IfErrors install_error
   File /oname=LICENSE.txt "..\LICENSE"
   WriteUninstaller "$INSTDIR\Uninstall.exe"
@@ -133,3 +133,4 @@ files:
   RMDir "$INSTDIR"
   ; User's lighting/window settings are deliberately preserved.
 SectionEnd
+
