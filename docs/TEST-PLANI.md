@@ -1,6 +1,6 @@
-# RS7 v1.1.1 — kullanıcı test planı
+# RS7 v1.1.2 — kullanıcı test planı
 
-İndirilecek dosya: RS7-v1.1.1-Windows-x64.exe. Eski RS7 sürümünden tepsi menüsü → Tamamen çık ile çıkın; ATK HUB kapalı, klavye USB ile bağlı olsun.
+İndirilecek dosya: RS7-v1.1.2-Windows-x64.exe. Eski RS7 sürümünden tepsi menüsü → Tamamen çık ile çıkın; ATK HUB kapalı, klavye USB ile bağlı olsun.
 
 | Kontrol | Beklenen sonuç |
 |---|---|
@@ -12,6 +12,8 @@
 | İki renk → ilk ve ikinci renkleri farklı seç | Desen iki renk arasında geçiş yapar; ayarlar çalışırken uygulanır. |
 | Arama: kalp → Kalp şekli | Tuşlar kalp silueti oluşturur; çevre karanlıktır. Kalp atışı ayrı olarak bütün klavye parlaklığını değiştirir. |
 | Tuşa basınca dalga / Tek tuş sönümü / Tuş alevi | Tuşa basınca ilgili tepki görülür; basmadan sürekli yeni tepki oluşmaz. Fn algılanmaz. |
+| Tuşla tsunami → A / sağ taraftaki bir tuş | Klavye boyunca dik dalga sırasıyla sağa / sola ilerler; renk, hız ve parlaklık uygulanır. |
+| Görsel kartların üzerine gel → başka karta geç | Önizleme hareket eder; tıklayınca mod ve açıklama güncellenir. Büyük klavye ve sağ ayarlar yerinde kalır. |
 | Kategori filtresi / arama / sayfalar | Liste uygun sonuçlara iner; boş aramada açıklama görünür; önceki/sonraki sayfalar doğru değişir. |
 | Ses modları → Windows varsayılan çıkışında müzik çal | Ses seviyesiyle ışıklar değişir. Mikrofon açılmaz. Özel ses kipleri ölçülemeyebilir. |
 | Ekran modları → farklı renkli pencere göster | Birincil ekran renkleri yansır; palet yerine ekran renkleri kullanılır. |

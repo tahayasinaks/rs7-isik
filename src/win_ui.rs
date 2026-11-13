@@ -312,7 +312,7 @@ unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, w: WPARAM, l: LPARAM) ->
                 theme::refresh_library(hwnd, state);
                 return 0;
             }
-            if (400..412).contains(&id) {
+            if (400..400 + crate::library::PAGE_SIZE as i32).contains(&id) {
                 let effect = state.library.borrow().slot((id - 400) as usize);
                 if let Some(effect) = effect {
                     state.worker.settings.lock().unwrap().effect = effect;
@@ -413,7 +413,14 @@ unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, w: WPARAM, l: LPARAM) ->
         }
         WM_TIMER if state.preview => {
             if IsWindowVisible(hwnd) != 0 && IsIconic(hwnd) == 0 {
-                InvalidateRect(hwnd, null(), 0);
+                let hero = RECT {
+                    left: 24,
+                    top: 120,
+                    right: 1136,
+                    bottom: 464,
+                };
+                InvalidateRect(hwnd, &hero, 0);
+                theme::animate_thumbnail(hwnd, state);
             }
             0
         }
@@ -450,6 +457,7 @@ unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, w: WPARAM, l: LPARAM) ->
             };
             if IsWindowVisible(hwnd) != 0 && IsIconic(hwnd) == 0 {
                 InvalidateRect(hwnd, &rect, 0);
+                theme::animate_thumbnail(hwnd, state);
             }
             0
         }
@@ -637,21 +645,22 @@ pub fn run() {
         );
         if preview {
             let mut s = ui.worker.settings.lock().unwrap();
-            s.effect = 64;
+            s.effect = 65;
             s.speed = 1.0;
-            s.palette = 0;
+            s.palette = 2;
             s.brightness = 0.8;
             s.first = [198, 244, 50];
             s.second = [255, 255, 255];
         }
 
         build(hwnd, &mut ui);
+        if preview {
+            text(GetDlgItem(hwnd, SEARCH), "tsunami");
+            theme::refresh_library(hwnd, &ui);
+        }
 
         SetWindowLongPtrW(hwnd, GWLP_USERDATA, (&mut *ui) as *mut Ui as isize);
 
-        if preview {
-            text(GetDlgItem(hwnd, SEARCH), "kalp");
-        }
         let dark: i32 = 1;
         windows_sys::Win32::Graphics::Dwm::DwmSetWindowAttribute(
             hwnd,

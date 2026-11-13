@@ -1,7 +1,7 @@
 mod extended;
 pub type Rgb = [u8; 3];
 pub type Frame = [Rgb; 90];
-pub const EFFECTS: [&str; 65] = [
+pub const EFFECTS: [&str; 66] = [
     "Tuşa basınca dalga",
     "Sürekli dalga",
     "Çapraz dalga",
@@ -67,6 +67,7 @@ pub const EFFECTS: [&str; 65] = [
     "Sesle parti",
     "Sesle halkalar",
     "Kalp şekli",
+    "Tuşla tsunami",
 ];
 pub const CATEGORIES: [&str; 7] = [
     "Temel",
@@ -77,12 +78,12 @@ pub const CATEGORIES: [&str; 7] = [
     "Ses ve ekran",
     "Sistem",
 ];
-pub const CATEGORY: [usize; 65] = [
+pub const CATEGORY: [usize; 66] = [
     1, 2, 2, 0, 3, 3, 3, 3, 0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 4, 4, 4, 4,
     4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 4, 3, 4, 4, 4, 4, 4, 4, 4, 2, 5, 5, 5, 5, 5, 5, 6, 6, 6, 5, 5,
-    4,
+    4, 1,
 ];
-pub const DESCRIPTIONS: [&str; 65] = [
+pub const DESCRIPTIONS: [&str; 66] = [
     "Basılan tuştan dışarı doğru ince halkalar yayılır.",
     "Renk şeridi klavyenin bir ucundan diğerine akar.",
     "Dalga satır ve sütunlarda çapraz ilerler.",
@@ -148,9 +149,10 @@ pub const DESCRIPTIONS: [&str; 65] = [
     "Ses seviyesi renkli dama alanlarını aydınlatır.",
     "Ses seviyesi merkezdeki halkanın boyutunu ve parlaklığını değiştirir.",
     "Tuş ışıkları kalp şeklinde yanar; kalp ritmi hız, renk ve parlaklığa uyar.",
+    "Basılan tuştan tam boy dik dalga karşı kenara ilerler; sol tuşlar sağa, sağ tuşlar sola akar.",
 ];
 pub fn reactive(effect: usize) -> bool {
-    effect == 0 || (12..=17).contains(&effect)
+    effect == 0 || effect == 65 || (12..=17).contains(&effect)
 }
 pub fn source_mode(effect: usize) -> u8 {
     match effect {

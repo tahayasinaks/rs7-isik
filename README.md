@@ -2,30 +2,32 @@
 
 ATK RS7 Air için Türkçe, yerel Windows RGB uygulaması. Rust ile yazılmıştır; kurulum, Rust, .NET, Electron veya ayrı bir yardımcı program gerektirmez.
 
-[**Son sürümü indir**](https://github.com/tahayasinaks/rs7-isik/releases/latest) · [65 efektin kataloğu](docs/EFEKT-KATALOGU.md) · [Test planı](docs/TEST-PLANI.md)
+[**Son sürümü indir**](https://github.com/tahayasinaks/rs7-isik/releases/latest) · [66 efektin kataloğu](docs/EFEKT-KATALOGU.md) · [Test planı](docs/TEST-PLANI.md)
 
 ![RS7 arayüzü](docs/images/rs7.png)
 
 ## Kullanım
 
-1. Releases → **RS7-v1.1.1-Windows-x64.exe** dosyasını indirin. Kaynak ZIP'i veya eski Onizleme EXE'sini kullanmayın.
+1. Releases → **RS7-v1.1.2-Windows-x64.exe** dosyasını indirin. Kaynak ZIP'i veya eski Onizleme EXE'sini kullanmayın.
 2. Eski RS7 sürümünden tepsi simgesi → **Tamamen çık** ile çıkın; ATK HUB'ı kapatın.
 3. Klavyeyi USB ile bağlayın, uygulamada **Klavyeyi bağla** seçin.
 4. Bir efekt seçip **Başlat** seçin. Renk, hız ve parlaklık değişiklikleri çalışırken uygulanır.
 5. **X / küçült**: efekt sistem tepsisinde devam eder. **Tamamen çık**: akış kapanır, USB bırakılır.
 
-## v1.1.1 düzeltmesi
+## v1.1.2 hotfix
 
-Kalp şekli artık eşit sütunlu bir LED maskesi yerine gerçek tuş konumlarına göre çizilir. Kaydırılmış satırlar ve geniş tuşlar hesaba katılır; sivri uç N tuşunun merkezine oturur. Kenarlarda yumuşak parlaklık geçişi kullanılır.
+Efekt seçimi, küçük klavye önizlemeleri ve Türkçe açıklamalar içeren kartlara taşındı. Kartların üzerine gelince animasyon oynar; tıklayınca efekt seçilir. Çift tamponlu çizim, önbelleğe alınan tuş eşlemeleri ve yaklaşık 30 FPS yenileme ile önizleme çizimi iyileştirildi; üç saniyelik ani zaman sıfırlaması kaldırıldı.
+
+Yeni **Tuşla tsunami** modu, basılan tuştan karşı kenara tam boy dik bir dalga gönderir: sol taraftan sağa, sağ taraftan sola. Renk, hız ve parlaklık ayarlanabilir. Üst bölümdeki logo küçültülüp ortalandı; klavye ve ayar panellerinin yerleşimi korundu.
 
 ## Özellikler
 
-- 65 Türkçe seçenek; arama, yedi kategori ve sayfalama.
+- 66 Türkçe seçenek; görsel kartlar, arama, yedi kategori ve altışarlı sayfalama.
 - Dalga, deniz dalgası, kalp şekli, tuşa duyarlı desenler, doğal ve geometrik animasyonlar.
 - Çok renk, tek renk ve iki renk geçişi; %0–100 parlaklık ve 0.20×–3.00× hız. Tek renkli dalga ve geometrik desenler parlaklık geçişiyle hareketini korur.
 - Windows ses çıkışına tepki (mikrofon açılmaz), birincil ekran renkleri, işlemci/bellek yükü ve saat.
 - Üst barda duruma göre değişen bağlantı ve başlat/durdur düğmeleri.
-- Şeffaf büyük logo, 81 tuşlu canlı çizim; #0b0b0c / #ffffff / #c6f432 paleti.
+- Şeffaf logo, 81 tuşlu canlı çizim; #0b0b0c / #ffffff / #c6f432 paleti.
 - Tam çıkışta efekt/renk/hız/parlaklık kaydedilir; sonraki açılışta geri yüklenir. Bağlanma ve başlatma kullanıcının kontrolündedir.
 - Tek örnek, Explorer yeniden başlarsa tepsi simgesini geri ekleme; USB döngüsü arayüz çiziminden ayrıdır.
 
@@ -33,9 +35,9 @@ Bazı modlarda hız veya palet anlamlı değildir ve ilgili denetim pasiftir. Sa
 
 ## Doğrulama ve sınırlar
 
-23 otomatik Rust testi; efektlerin örnek çıktıları, parlaklık sınırı, tek renkte hareket, Türkçe arama, tuş/LED eşlemesi, USB paketleri, ayar kaydı ve gömülü logo yüklemesi için çalışır. Yerel Windows canlı kaynak entegrasyon testi ayrıca çalıştırılır; CI'da masaüstü/ses aygıtı gerektirdiği için varsayılan olarak atlanır.
+24 otomatik Rust testi; efektlerin örnek çıktıları, parlaklık sınırı, tek renkte hareket, Türkçe arama, tuş/LED eşlemesi, USB paketleri, ayar kaydı ve gömülü logo yüklemesi için çalışır. Yerel Windows canlı kaynak entegrasyon testi ayrıca çalıştırılır; CI'da masaüstü/ses aygıtı gerektirdiği için varsayılan olarak atlanır.
 
-Fiziksel test cihazı USB 373b:1220 / firmware 2.02 kullanan RS7 Air'dir. Önceki sürümlerde bağlantı, tam çıkış ve X ile tepside kesintisiz devam etme doğrulandı. Yeni 65 seçeneğin tümü gerçek cihazda tek tek doğrulanmış değildir; [test planıyla](docs/TEST-PLANI.md) kontrol edebilirsiniz. Diğer firmware varyantları henüz fiziksel test edilmedi.
+Fiziksel test cihazı USB 373b:1220 / firmware 2.02 kullanan RS7 Air'dir. Önceki sürümlerde bağlantı, tam çıkış ve X ile tepside kesintisiz devam etme doğrulandı. Yeni 66 seçeneğin tümü gerçek cihazda tek tek doğrulanmış değildir; [test planıyla](docs/TEST-PLANI.md) kontrol edebilirsiniz. Diğer firmware varyantları henüz fiziksel test edilmedi.
 
 Animasyonlar bilgisayarda hesaplanır; tamamen çıkıştan sonra klavye firmware'ine özel efekt yüklenmiş olmaz. Fn algılanmaz; Windows tuş olayları kullanıldığından başka klavyeler de tepkiyi tetikleyebilir. Tuşlar, ses ve ekran örnekleri dosyaya/ağa yazılmaz. HDR, korumalı video veya özel ses kiplerinde canlı kaynak kısıtları olabilir; ayrıntılar katalogdadır.
 
@@ -58,4 +60,4 @@ Kaynak: src/lighting.rs ve src/lighting/extended.rs efektler; src/hardware.rs HI
 
 ## Yayınlar
 
-Sürüm sırası v1.0.0 → v1.0.1 → v1.1.0 → **v1.1.1**. Her yayın EXE, SHA-256, Türkçe notlar ve kaynak etiketi içerir. [Yayınlama kılavuzu](docs/YAYINLAMA.md).
+Sürüm sırası v1.0.0 → v1.0.1 → v1.1.0 → v1.1.1 → **v1.1.2**. Her yayın EXE, SHA-256, Türkçe notlar ve kaynak etiketi içerir. [Yayınlama kılavuzu](docs/YAYINLAMA.md).

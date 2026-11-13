@@ -51,7 +51,7 @@ checksum = "f6b464fbc74e149a392436b17d523f769e057cb6877f6a5c4618bc6f11800548"
 
 [[package]]
 name = "rs7-isik"
-version = "1.1.1"
+version = "1.1.2"
 dependencies = [
  "hidapi",
  "windows-sys",
@@ -77,3 +77,4 @@ checksum = "ae137229bcbd6cdf0f7b80a31df61766145077ddf49416a728b02cb3921ff3fc"
 dependencies = [
  "windows-link",
 ]
+

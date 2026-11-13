@@ -103,6 +103,31 @@ pub(super) fn render(
                 let d = distance(x, y, p.x, p.y);
                 let fade = (1. - age / 2.2).clamp(0., 1.);
                 let value = match s.effect {
+                    65 => {
+                        let centre = |row, col| {
+                            crate::layout::led_rect(row, col).map(|(l, _, w, _)| l + w * 0.5)
+                        };
+                        if let (Some(px), Some(kx)) =
+                            (centre(p.y as u8, p.x as u8), centre(row, col))
+                        {
+                            let dir = if px < 7.5 { 1. } else { -1. };
+                            let travel = (kx - px) * dir;
+                            let behind = age * 7. - travel;
+                            if travel >= -0.4 && behind >= -0.7 {
+                                let crest = (-((behind / 0.65).powi(2))).exp();
+                                let water = if behind >= 0. {
+                                    0.55 * (-behind / 1.7).exp()
+                                } else {
+                                    0.
+                                };
+                                crest.max(water) * (1. - age / 4.).clamp(0., 1.)
+                            } else {
+                                0.
+                            }
+                        } else {
+                            0.
+                        }
+                    }
                     12 => {
                         if d < 0.25 {
                             fade.powi(2)
@@ -452,5 +477,35 @@ mod heart_tests {
         assert_eq!(a[0], [0; 3]);
         assert_eq!(a[7], [0; 3]);
         assert_ne!(a[66], [0; 3]);
+    }
+}
+
+#[cfg(test)]
+mod tsunami_tests {
+    use super::*;
+    #[test]
+    fn vertical_front_moves_toward_opposite_edge_and_respects_speed() {
+        let mut s = Settings {
+            effect: 65,
+            palette: 1,
+            brightness: 1.,
+            ..Default::default()
+        };
+        for (x, lit_col, dark_col) in [(1., 4, 0), (12., 9, 14)] {
+            let presses = [Press { x, y: 2., time: 0. }];
+            let f = super::super::render(&s, 0.4, 0.4, &presses);
+            let pixel = |row, col| f[(0..90).find(|&i| coord(i) == (row, col)).unwrap()];
+            assert_ne!(pixel(0, lit_col), [0; 3]);
+            assert_ne!(pixel(3, lit_col), [0; 3]);
+            assert_eq!(pixel(2, dark_col), [0; 3]);
+        }
+        let presses = [Press {
+            x: 1.,
+            y: 2.,
+            time: 0.,
+        }];
+        let normal = super::super::render(&s, 0.4, 0.4, &presses);
+        s.speed = 2.;
+        assert_eq!(normal, super::super::render(&s, 0.4, 0.2, &presses));
     }
 }

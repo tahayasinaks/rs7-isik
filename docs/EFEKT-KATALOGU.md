@@ -1,6 +1,6 @@
-# Türkçe efekt kataloğu — 65 seçenek
+# Türkçe efekt kataloğu — 66 seçenek
 
-Araştırma tarihi: 13 Kasım 2026. Sürüm: 1.1.0-preview.4.
+Araştırma tarihi: 13 Kasım 2026. Sürüm: 1.1.2.
 
 Bu katalog, yaygın RGB yazılımlarının belgelenmiş davranışlarını karşılaştırır. Marka adları yerine davranışa göre Türkçe adlar kullanılır. Bütün animasyon hesaplamaları bu proje için Rust ile yazıldı; üretici yazılımı veya ücretli efekt dosyaları pakete alınmadı. Üreticinin birebir görsel çıktısını veya belirli bir firmware efektini kopyalama iddiası yoktur.
 
@@ -120,10 +120,14 @@ Parlaklık bütün modlarda uygulanır. Sabit/veriye bağlı desenlerde anlamlı
 
 ## Kapsamın sınırı
 
-İnternetteki bütün efektlerin sonlu ve tamamlanmış bir listesi yoktur. Özel betikler ve yeni topluluk efektleri sürekli eklenir. Bu 65 seçenek geniş bir başlangıç kütüphanesidir; bütün RGB uygulamalarındaki her özel içeriğin tamamlandığı anlamına gelmez. GIF/video oynatıcı, genel shader editörü, katman/mask düzenleyicisi ve oyunların canlı olay entegrasyonları ayrı ürün özellikleridir; bu listede varmış gibi gösterilmez. CPU/GPU sıcaklığı için sürücü veya harici sensör kaynağı eklenmedi.
+İnternetteki bütün efektlerin sonlu ve tamamlanmış bir listesi yoktur. Özel betikler ve yeni topluluk efektleri sürekli eklenir. Bu 66 seçenek geniş bir başlangıç kütüphanesidir; bütün RGB uygulamalarındaki her özel içeriğin tamamlandığı anlamına gelmez. GIF/video oynatıcı, genel shader editörü, katman/mask düzenleyicisi ve oyunların canlı olay entegrasyonları ayrı ürün özellikleridir; bu listede varmış gibi gösterilmez. CPU/GPU sıcaklığı için sürücü veya harici sensör kaynağı eklenmedi.
 
 ## Doğrulama
 
 20 otomatik test geçti. Bunlar 64 modun örneklenmiş çıktılarını karşılaştırır; ad/metadata tutarlılığı, üç palet ve üç hızda sıfır parlaklık, tuş tepkilerinin girdi olmadan karanlık kalması ve zamanla sönmesi, Türkçe İ/ı araması ve kategori/sayfa sınırları kontrol edilir. Farklı örnek çıktılar, bütün olası ayarlarda modların benzersizliğinin matematiksel kanıtı değildir.
 
 Ayrıca yerel Windows ses ölçeri, ekran örnekleyicisi, işlemci/bellek ve saat kaynaklarını açıp okuyan bir entegrasyon testi geçti. CI ortamında masaüstü gerektirdiği için bu test varsayılan olarak atlanır. Arayüzde arama, seçim, sayfalama ve kategori filtresi incelendi. 64 modun tamamı gerçek RS7 üzerinde henüz tek tek denenmedi; bu yüzden sürüm önizlemedir.
+
+## Tuşla tsunami
+
+66. seçenek (ID 65), basılan tuşun fiziksel yatay konumundan başlayan dik dalgadır. Sol yarıdaki tuşlar sağa, sağ yarıdakiler sola dalga gönderir. Parlak tepenin arkasında sönümlenen geniş bir iz kalır. Her vuruş bağımsızdır; hız, parlaklık ve renk seçenekleri uygulanır.

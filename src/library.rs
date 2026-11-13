@@ -1,5 +1,5 @@
 use crate::lighting::{CATEGORY, EFFECTS};
-pub const PAGE_SIZE: usize = 12;
+pub const PAGE_SIZE: usize = 6;
 pub fn fold(s: &str) -> String {
     s.chars()
         .flat_map(char::to_lowercase)
@@ -58,9 +58,9 @@ mod tests {
         let mut l = Library::default();
         l.update("");
         assert_eq!(l.filtered.len(), EFFECTS.len());
-        l.page = 5;
+        l.page = l.pages() - 1;
         l.update("");
-        assert_eq!(l.visible().len(), EFFECTS.len() % PAGE_SIZE);
+        assert_eq!(l.visible().len(), (EFFECTS.len() - 1) % PAGE_SIZE + 1);
         l.update("ISIK");
         assert!(l
             .filtered

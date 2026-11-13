@@ -388,5 +388,11 @@
     "name": "Kalp şekli",
     "category": 4,
     "description": "Tuş ışıkları kalp şeklinde yanar; kalp ritmi hız, renk ve parlaklığa uyar."
+  },
+  {
+    "id": 65,
+    "name": "Tuşla tsunami",
+    "category": 1,
+    "description": "Basılan tuştan tam boy dik dalga karşı kenara ilerler; sol tuşlar sağa, sağ tuşlar sola akar."
   }
 ]

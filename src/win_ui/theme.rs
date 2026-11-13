@@ -75,16 +75,16 @@ pub unsafe fn build(hwnd: HWND, s: &mut Ui) {
     btn(hwnd, s, DISCONNECT, "Bağlantıyı kes", 856, 38, 140, 42);
     btn(hwnd, s, START, "Başlat", 1008, 38, 124, 42);
     btn(hwnd, s, STOP, "Durdur", 1008, 38, 124, 42);
-    for slot in 0..12 {
+    for slot in 0..crate::library::PAGE_SIZE as i32 {
         btn(
             hwnd,
             s,
             400 + slot,
             "",
             40 + (slot % 3) * 232,
-            550 + (slot / 3) * 54,
+            550 + (slot / 3) * 106,
             220,
-            48,
+            100,
         );
     }
     let search = child(
@@ -234,7 +234,7 @@ pub unsafe fn build(hwnd: HWND, s: &mut Ui) {
     refresh_library(hwnd, s);
     mode_controls(hwnd, s);
     sync_actions(hwnd, s);
-    SetTimer(hwnd, 1, 50, None);
+    SetTimer(hwnd, 1, 33, None);
 }
 unsafe fn visibility(h: HWND, show: bool) {
     if (GetWindowLongPtrW(h, GWL_STYLE) as u32 & WS_VISIBLE != 0) != show {
@@ -276,126 +276,100 @@ unsafe fn line(dc: HDC, points: &[(i32, i32)], color: u32, width: i32) {
     SelectObject(dc, old);
     DeleteObject(pen);
 }
-unsafe fn symbol(dc: HDC, x: i32, y: i32, category: usize, heart: bool, color: u32) {
-    if heart {
-        line(
-            dc,
-            &[
-                (x + 2, y + 7),
-                (x + 5, y + 3),
-                (x + 9, y + 3),
-                (x + 12, y + 7),
-                (x + 15, y + 3),
-                (x + 19, y + 3),
-                (x + 22, y + 7),
-                (x + 21, y + 11),
-                (x + 12, y + 20),
-                (x + 3, y + 11),
-                (x + 2, y + 7),
-            ],
-            color,
-            1,
-        );
-        return;
+unsafe fn thumbnail(
+    dc: HDC,
+    idx: usize,
+    settings: &lighting::Settings,
+    selected: bool,
+    hovered: bool,
+    elapsed: f32,
+) {
+    let mut demo = if selected {
+        settings.clone()
+    } else {
+        lighting::Settings {
+            effect: idx,
+            palette: 0,
+            brightness: 0.9,
+            ..Default::default()
+        }
+    };
+    demo.effect = idx;
+    let t = if hovered { elapsed } else { 0.45 };
+    let input = lighting::LiveInput {
+        audio: [0.45, 0.8],
+        screen: std::array::from_fn(|i| lighting::hsv_for_preview(i as f32 / 90.)),
+        cpu: 0.55,
+        memory: 0.7,
+        hour: 12,
+        minute: 34,
+    };
+    let presses = [lighting::Press {
+        x: 7.,
+        y: 2.,
+        time: (t / 2.5).floor() * 2.5,
+    }];
+    let frame = lighting::render_live(&demo, t * demo.speed, t, &presses, &input);
+    rect(dc, 10, 8, 200, 48, BG, 0x252524, 7);
+    static LED_INDICES: std::sync::OnceLock<Vec<usize>> = std::sync::OnceLock::new();
+    let indices = LED_INDICES.get_or_init(|| {
+        crate::layout::keys()
+            .iter()
+            .map(|key| {
+                (0..90)
+                    .find(|&i| lighting::coord(i) == (key.row, key.col))
+                    .unwrap()
+            })
+            .collect()
+    });
+    for (key, &i) in crate::layout::keys().iter().zip(indices) {
+        let c = frame[i];
+        let x = 13 + (key.u * 12.).round() as i32;
+        let y = 11 + key.row as i32 * 7;
+        let w = (key.width * 12.).round() as i32 - 1;
+        let fill = rgb(c.map(|v| 12 + ((v as u16 * 9) / 10) as u8));
+        rect(dc, x, y, w, 6, fill, fill, 1);
     }
-    match category {
-        0 => {
-            let old = SelectObject(dc, GetStockObject(NULL_BRUSH));
-            let p = CreatePen(PS_SOLID, 1, color);
-            let op = SelectObject(dc, p);
-            Ellipse(dc, x + 5, y + 5, x + 19, y + 19);
-            Ellipse(dc, x + 9, y + 9, x + 15, y + 15);
-            SelectObject(dc, op);
-            SelectObject(dc, old);
-            DeleteObject(p);
-        }
-        1 => {
-            line(dc, &[(x + 12, y + 1), (x + 12, y + 7)], color, 1);
-            line(dc, &[(x + 12, y + 17), (x + 12, y + 23)], color, 1);
-            line(dc, &[(x + 1, y + 12), (x + 7, y + 12)], color, 1);
-            line(dc, &[(x + 17, y + 12), (x + 23, y + 12)], color, 1);
-            rect(dc, x + 9, y + 9, 6, 6, color, color, 5);
-        }
-        2 => {
-            for row in [5, 12, 19] {
-                let pts = (0..24)
-                    .map(|i| (x + i, y + row + ((i as f32 * 0.35).sin() * 2.) as i32))
-                    .collect::<Vec<_>>();
-                line(dc, &pts, color, 1);
-            }
-        }
-        3 => {
-            line(
-                dc,
-                &[
-                    (x + 12, y + 1),
-                    (x + 15, y + 9),
-                    (x + 23, y + 12),
-                    (x + 15, y + 15),
-                    (x + 12, y + 23),
-                    (x + 9, y + 15),
-                    (x + 1, y + 12),
-                    (x + 9, y + 9),
-                    (x + 12, y + 1),
-                ],
-                color,
-                1,
-            );
-        }
-        4 => {
-            line(
-                dc,
-                &[
-                    (x + 12, y + 1),
-                    (x + 23, y + 12),
-                    (x + 12, y + 23),
-                    (x + 1, y + 12),
-                    (x + 12, y + 1),
-                ],
-                color,
-                1,
-            );
-            line(
-                dc,
-                &[
-                    (x + 12, y + 6),
-                    (x + 18, y + 12),
-                    (x + 12, y + 18),
-                    (x + 6, y + 12),
-                    (x + 12, y + 6),
-                ],
-                color,
-                1,
-            );
-        }
-        5 => {
-            for (i, h) in [7, 14, 21, 12, 5].iter().enumerate() {
-                rect(
-                    dc,
-                    x + i as i32 * 5,
-                    y + (24 - h) / 2,
-                    2,
-                    *h,
-                    color,
-                    color,
-                    2,
-                );
-            }
-        }
-        _ => {
-            for (i, h) in [8, 15, 21].iter().enumerate() {
-                rect(dc, x + 2 + i as i32 * 7, y + 22 - h, 4, *h, color, color, 2);
-            }
-        }
+}
+pub unsafe fn animate_thumbnail(hwnd: HWND, s: &Ui) {
+    let id = s.hovered.get();
+    if (400..400 + crate::library::PAGE_SIZE as i32).contains(&id) {
+        InvalidateRect(GetDlgItem(hwnd, id), null(), 0);
     }
 }
 pub unsafe fn button(s: &Ui, d: &DRAWITEMSTRUCT) {
+    // Compose the whole card off-screen: never expose its cleared background.
+    let w = d.rcItem.right - d.rcItem.left;
+    let h = d.rcItem.bottom - d.rcItem.top;
+    let dc = CreateCompatibleDC(d.hDC);
+    let bitmap = CreateCompatibleBitmap(d.hDC, w, h);
+    if dc.is_null() || bitmap.is_null() {
+        if !bitmap.is_null() {
+            DeleteObject(bitmap);
+        }
+        if !dc.is_null() {
+            DeleteDC(dc);
+        }
+        button_contents(s, d);
+        return;
+    }
+    let old = SelectObject(dc, bitmap);
+    let mut buffered = *d;
+    buffered.hDC = dc;
+    SetBkMode(dc, TRANSPARENT as i32);
+    button_contents(s, &buffered);
+    BitBlt(d.hDC, 0, 0, w, h, dc, 0, 0, SRCCOPY);
+    SelectObject(dc, old);
+    DeleteObject(bitmap);
+    DeleteDC(dc);
+}
+unsafe fn button_contents(s: &Ui, d: &DRAWITEMSTRUCT) {
     let id = d.CtlID as i32;
     let dc = d.hDC;
     let w = d.rcItem.right - d.rcItem.left;
     let h = d.rcItem.bottom - d.rcItem.top;
     let settings = s.worker.settings.lock().unwrap().clone();
-    let effect = (400..412).contains(&id);
+    let effect = (400..400 + crate::library::PAGE_SIZE as i32).contains(&id);
     let palette = (600..603).contains(&id);
     let idx = if effect {
         s.library.borrow().slot((id - 400) as usize)
@@ -465,44 +439,55 @@ pub unsafe fn button(s: &Ui, d: &DRAWITEMSTRUCT) {
         WHITE
     };
     if let Some(idx) = idx {
-        rect(
+        thumbnail(
             dc,
-            10,
-            8,
-            32,
-            32,
-            if selected { 0x263a2a } else { 0x232321 },
-            if selected { 0x263a2a } else { 0x232321 },
-            9,
-        );
-        symbol(
-            dc,
-            14,
-            12,
-            lighting::CATEGORY[idx],
-            idx == 64,
-            if selected { LIME } else { 0xb5b3ae },
+            idx,
+            &settings,
+            selected,
+            hovered,
+            s.started.elapsed().as_secs_f32(),
         );
         label(
             dc,
             &title,
-            52,
-            7,
-            if title.chars().count() > 21 { 12 } else { 14 },
+            12,
+            60,
+            if title.chars().count() > 23 { 12 } else { 14 },
             color,
             true,
         );
-        label(
-            dc,
-            lighting::CATEGORIES[lighting::CATEGORY[idx]],
-            52,
-            28,
-            10,
-            if selected { 0x8fc694 } else { MUTED },
-            false,
-        );
+        {
+            let font = CreateFontW(
+                -10,
+                0,
+                0,
+                0,
+                400,
+                0,
+                0,
+                0,
+                DEFAULT_CHARSET as u32,
+                0,
+                0,
+                CLEARTYPE_QUALITY as u32,
+                0,
+                wide("Segoe UI").as_ptr(),
+            );
+            let old = SelectObject(dc, font);
+            SetTextColor(dc, MUTED);
+            let mut r = RECT {
+                left: 12,
+                top: 80,
+                right: w - 10,
+                bottom: 96,
+            };
+            let t = wide(lighting::DESCRIPTIONS[idx]);
+            DrawTextW(dc, t.as_ptr(), -1, &mut r, DT_SINGLELINE | DT_END_ELLIPSIS);
+            SelectObject(dc, old);
+            DeleteObject(font);
+        }
         if selected {
-            rect(dc, w - 13, 9, 4, 4, LIME, LIME, 4);
+            rect(dc, w - 14, 64, 5, 5, LIME, LIME, 5);
         }
     } else if id == FIRST || id == SECOND {
         let c = if id == FIRST {
@@ -541,11 +526,11 @@ pub unsafe fn paint(hwnd: HWND, s: &Ui) {
     rect(dc, 0, 0, 1160, 834, BG, BG, 0);
     DrawIconEx(
         dc,
-        12,
-        3,
-        crate::brand::icon(106),
-        106,
-        106,
+        27,
+        18,
+        crate::brand::icon(76),
+        76,
+        76,
         0,
         null_mut(),
         DI_NORMAL,
@@ -678,10 +663,14 @@ pub unsafe fn paint(hwnd: HWND, s: &Ui) {
         );
         label(
             dc,
-            &format!("Sayfa {} / {}", lib.page + 1, lib.pages()),
-            334,
+            &format!(
+                "Sayfa {} / {}  ·  Önizleme için üzerine gel",
+                lib.page + 1,
+                lib.pages()
+            ),
+            237,
             773,
-            12,
+            11,
             MUTED,
             false,
         );
