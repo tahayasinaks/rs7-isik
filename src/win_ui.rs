@@ -1,3 +1,4 @@
+mod category_popup;
 mod color_picker;
 mod keyboard;
 mod responsive;
@@ -373,29 +374,21 @@ unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, w: WPARAM, l: LPARAM) ->
                 return 0;
             }
             if id == CATEGORY_FILTER {
-                let menu = CreatePopupMenu();
-                AppendMenuW(menu, MF_STRING, 800, wide("Tümü").as_ptr());
-                for (i, c) in lighting::CATEGORIES.iter().enumerate() {
-                    AppendMenuW(menu, MF_STRING, 801 + i, wide(c).as_ptr());
-                }
-                let mut r: RECT = std::mem::zeroed();
-                GetWindowRect(GetDlgItem(hwnd, CATEGORY_FILTER), &mut r);
-                let chosen = TrackPopupMenu(
-                    menu,
-                    TPM_RETURNCMD | TPM_LEFTALIGN,
-                    r.left,
-                    r.bottom,
-                    0,
+                let category = state.library.borrow().category;
+                let font = if state.scaled_font.get().is_null() {
+                    state.font
+                } else {
+                    state.scaled_font.get()
+                };
+                if let Some(index) = category_popup::show(
                     hwnd,
-                    null(),
-                );
-                DestroyMenu(menu);
-                if chosen >= 800 && chosen <= 807 {
-                    state.library.borrow_mut().category = if chosen == 800 {
-                        None
-                    } else {
-                        Some((chosen - 801) as usize)
-                    };
+                    GetDlgItem(hwnd, CATEGORY_FILTER),
+                    category,
+                    font,
+                    responsive::current(hwnd, state).scale,
+                ) {
+                    state.library.borrow_mut().category =
+                        if index == 0 { None } else { Some(index - 1) };
                     theme::refresh_library(hwnd, state);
                 }
                 return 0;

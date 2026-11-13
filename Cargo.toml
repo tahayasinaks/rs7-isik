@@ -1,6 +1,6 @@
 [package]
 name = "rs7-isik"
-version = "1.2.0"
+version = "1.2.1"
 edition = "2021"
 license = "MIT"
 description = "ATK RS7 Air için yerel Rust aydınlatma uygulaması"

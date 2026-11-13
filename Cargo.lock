@@ -129,7 +129,7 @@ dependencies = [
 
 [[package]]
 name = "rs7-isik"
-version = "1.2.0"
+version = "1.2.1"
 dependencies = [
  "hidapi",
  "serde_json",

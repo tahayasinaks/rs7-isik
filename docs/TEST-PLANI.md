@@ -1,6 +1,6 @@
-# RS7 Light v1.2.0 — kullanıcı test planı
+# RS7 Light v1.2.1 — kullanıcı test planı
 
-İndirilecek dosya: RS7-Light-v1.2.0-Setup-x64.exe. Eski RS7 sürümünden tepsi menüsü → Tamamen çık ile çıkın; ATK HUB kapalı, klavye USB ile bağlı olsun.
+İndirilecek dosya: RS7-Light-v1.2.1-Setup-x64.exe. Eski RS7 sürümünden tepsi menüsü → Tamamen çık ile çıkın; ATK HUB kapalı, klavye USB ile bağlı olsun.
 
 | Kontrol | Beklenen sonuç |
 |---|---|
