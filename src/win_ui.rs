@@ -1,4 +1,6 @@
+mod color_picker;
 mod keyboard;
+mod responsive;
 mod theme;
 use crate::{
     lighting::{self, EFFECTS},
@@ -16,7 +18,7 @@ use windows_sys::Win32::{
     Foundation::*,
     Graphics::Gdi::*,
     System::{LibraryLoader::GetModuleHandleW, Threading::CreateMutexW},
-    UI::{Controls::Dialogs::*, Controls::*, Input::KeyboardAndMouse::*, WindowsAndMessaging::*},
+    UI::{Controls::*, Input::KeyboardAndMouse::*, WindowsAndMessaging::*},
 };
 static KEYS: OnceLock<SyncSender<(u32, Instant)>> = OnceLock::new();
 thread_local! {static HELD:RefCell<[bool;512]>=const{RefCell::new([false;512])};}
@@ -34,6 +36,7 @@ const SEARCH: i32 = 207;
 const CATEGORY_FILTER: i32 = 208;
 const PREVIOUS: i32 = 209;
 const NEXT: i32 = 210;
+const AUTOSTART: i32 = 213;
 const TBM_GETPOS: u32 = WM_USER;
 struct Ui {
     worker: Worker,
@@ -43,6 +46,8 @@ struct Ui {
     first: HWND,
     second: HWND,
     font: HFONT,
+    scaled_font: std::cell::Cell<HFONT>,
+    font_px: std::cell::Cell<i32>,
     last_status: RefCell<String>,
     tray: RefCell<Option<tray::Tray>>,
     taskbar_created: u32,
@@ -52,6 +57,8 @@ struct Ui {
     library: RefCell<crate::library::Library>,
     preview_presses: RefCell<Vec<lighting::Press>>,
     hovered: std::cell::Cell<i32>,
+    scroll: std::cell::Cell<i32>,
+    autostart: std::cell::Cell<bool>,
 }
 fn wide(text: &str) -> Vec<u16> {
     text.encode_utf16().chain(Some(0)).collect()
@@ -98,19 +105,7 @@ unsafe fn choose(hwnd: HWND, state: &Ui, second: bool) {
     } else {
         settings.first
     };
-    let mut custom = [0u32; 16];
-    let mut dialog: CHOOSECOLORW = std::mem::zeroed();
-    dialog.lStructSize = std::mem::size_of::<CHOOSECOLORW>() as u32;
-    dialog.hwndOwner = hwnd;
-    dialog.rgbResult = value[0] as u32 | ((value[1] as u32) << 8) | ((value[2] as u32) << 16);
-    dialog.lpCustColors = custom.as_mut_ptr();
-    dialog.Flags = CC_FULLOPEN | CC_RGBINIT;
-    if ChooseColorW(&mut dialog) != 0 {
-        let c = [
-            dialog.rgbResult as u8,
-            (dialog.rgbResult >> 8) as u8,
-            (dialog.rgbResult >> 16) as u8,
-        ];
+    if let Some(c) = color_picker::show(hwnd, value, state.font) {
         if second {
             settings.second = c;
             settings.palette = 2;
@@ -180,6 +175,45 @@ unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, w: WPARAM, l: LPARAM) ->
         return 0;
     }
     match msg {
+        WM_EXITSIZEMOVE => {
+            responsive::save_window(hwnd, state);
+            0
+        }
+        WM_GETMINMAXINFO => {
+            let limits = &mut *(l as *mut MINMAXINFO);
+            limits.ptMinTrackSize = POINT { x: 680, y: 520 };
+            0
+        }
+        WM_SIZE => {
+            if w != SIZE_MINIMIZED as usize {
+                responsive::apply(hwnd, state);
+            }
+            0
+        }
+        WM_VSCROLL => {
+            let mut info: SCROLLINFO = std::mem::zeroed();
+            info.cbSize = std::mem::size_of::<SCROLLINFO>() as u32;
+            info.fMask = SIF_TRACKPOS;
+            GetScrollInfo(hwnd, SB_VERT, &mut info);
+            let current = responsive::current(hwnd, state);
+            let target = match (w & 65535) as i32 {
+                SB_LINEUP => current.scroll - 48,
+                SB_LINEDOWN => current.scroll + 48,
+                SB_PAGEUP => current.scroll - current.h + 64,
+                SB_PAGEDOWN => current.scroll + current.h - 64,
+                SB_THUMBTRACK | SB_THUMBPOSITION => info.nTrackPos,
+                SB_TOP => 0,
+                SB_BOTTOM => current.content,
+                _ => current.scroll,
+            };
+            responsive::scroll(hwnd, state, target - current.scroll);
+            0
+        }
+        WM_MOUSEWHEEL => {
+            let delta = ((w >> 16) & 65535) as i16 as i32;
+            responsive::scroll(hwnd, state, -delta * 96 / 120);
+            0
+        }
         WM_ERASEBKGND => 1,
         WM_NOTIFY => theme::slider(&*(l as *const NMCUSTOMDRAW)),
         WM_DRAWITEM => {
@@ -268,6 +302,37 @@ unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, w: WPARAM, l: LPARAM) ->
         }
         WM_COMMAND => {
             let id = (w & 0xffff) as i32;
+            if id == AUTOSTART {
+                let next = !state.autostart.get();
+                if state.preview {
+                    state.autostart.set(next);
+                } else {
+                    match crate::startup::set(next) {
+                        Ok(()) => state.autostart.set(next),
+                        Err(error) => {
+                            MessageBoxW(
+                                hwnd,
+                                wide(&format!(
+                                    "Windows başlangıç tercihi değiştirilemedi.\n{error}"
+                                ))
+                                .as_ptr(),
+                                wide("RS7 · Başlangıç ayarı").as_ptr(),
+                                MB_OK | MB_ICONERROR,
+                            );
+                        }
+                    }
+                }
+                text(
+                    GetDlgItem(hwnd, AUTOSTART),
+                    if state.autostart.get() {
+                        "Windows ile başlat · Açık"
+                    } else {
+                        "Windows ile başlat · Kapalı"
+                    },
+                );
+                InvalidateRect(GetDlgItem(hwnd, AUTOSTART), null(), 0);
+                return 0;
+            }
             if id == SEARCH && ((w >> 16) as u32) == EN_CHANGE {
                 theme::refresh_library(hwnd, state);
                 return 0;
@@ -324,6 +389,7 @@ unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, w: WPARAM, l: LPARAM) ->
             }
             if (600..603).contains(&id) {
                 state.worker.settings.lock().unwrap().palette = (id - 600) as usize;
+                theme::mode_controls(hwnd, state);
                 RedrawWindow(hwnd, null(), null_mut(), RDW_INVALIDATE | RDW_ALLCHILDREN);
                 return 0;
             }
@@ -362,6 +428,7 @@ unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, w: WPARAM, l: LPARAM) ->
             }
             if id == FIRST || id == SECOND {
                 choose(hwnd, state, id == SECOND);
+                theme::mode_controls(hwnd, state);
             }
             RedrawWindow(hwnd, null(), null_mut(), RDW_INVALIDATE | RDW_ALLCHILDREN);
             0
@@ -369,7 +436,10 @@ unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, w: WPARAM, l: LPARAM) ->
         WM_LBUTTONDOWN if state.preview => {
             let x = (l as u32 & 65535) as i32;
             let y = ((l as u32 >> 16) & 65535) as i32;
-            if let Some((logical_x, logical_y)) = keyboard::hit(x, y) {
+            if let Some((logical_x, logical_y)) = responsive::current(hwnd, state)
+                .key_point(x, y)
+                .and_then(|(x, y)| keyboard::hit(x, y))
+            {
                 let mut presses = state.preview_presses.borrow_mut();
                 if presses.len() == 32 {
                     presses.remove(0);
@@ -413,12 +483,8 @@ unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, w: WPARAM, l: LPARAM) ->
         }
         WM_TIMER if state.preview => {
             if IsWindowVisible(hwnd) != 0 && IsIconic(hwnd) == 0 {
-                let hero = RECT {
-                    left: 24,
-                    top: 120,
-                    right: 1136,
-                    bottom: 464,
-                };
+                let mut hero = responsive::current(hwnd, state).hero.rect();
+                OffsetRect(&mut hero, 0, -state.scroll.get());
                 InvalidateRect(hwnd, &hero, 0);
                 theme::animate_thumbnail(hwnd, state);
             }
@@ -449,12 +515,8 @@ unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, w: WPARAM, l: LPARAM) ->
             }
             drop(status);
             theme::sync_actions(hwnd, state);
-            let rect = RECT {
-                left: 24,
-                top: 120,
-                right: 1136,
-                bottom: 464,
-            };
+            let mut rect = responsive::current(hwnd, state).hero.rect();
+            OffsetRect(&mut rect, 0, -state.scroll.get());
             if IsWindowVisible(hwnd) != 0 && IsIconic(hwnd) == 0 {
                 InvalidateRect(hwnd, &rect, 0);
                 theme::animate_thumbnail(hwnd, state);
@@ -466,6 +528,7 @@ unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, w: WPARAM, l: LPARAM) ->
             0
         }
         WM_CLOSE => {
+            responsive::save_window(hwnd, state);
             if state.preview {
                 DestroyWindow(hwnd);
             } else {
@@ -486,6 +549,7 @@ unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, w: WPARAM, l: LPARAM) ->
             0
         }
         tray::EXIT => {
+            responsive::save_window(hwnd, state);
             KillTimer(hwnd, 1);
             let saved = if state.preview {
                 Ok(())
@@ -604,12 +668,20 @@ pub fn run() {
             library: RefCell::new(crate::library::Library::default()),
             preview_presses: RefCell::new(Vec::new()),
             hovered: std::cell::Cell::new(0),
+            scroll: std::cell::Cell::new(0),
+            autostart: std::cell::Cell::new(if preview {
+                false
+            } else {
+                crate::startup::enabled().unwrap_or(false)
+            }),
             status: null_mut(),
             brightness: null_mut(),
             speed: null_mut(),
             first: null_mut(),
             second: null_mut(),
             font,
+            scaled_font: std::cell::Cell::new(null_mut()),
+            font_px: std::cell::Cell::new(0),
             last_status: RefCell::new(String::new()),
             tray: RefCell::new(None),
             taskbar_created: RegisterWindowMessageW(wide("TaskbarCreated").as_ptr()),
@@ -618,7 +690,7 @@ pub fn run() {
             0,
             class.as_ptr(),
             wide(crate::brand::NAME).as_ptr(),
-            WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_CLIPCHILDREN,
+            WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_VSCROLL,
             CW_USEDEFAULT,
             CW_USEDEFAULT,
             1176,
@@ -686,7 +758,9 @@ pub fn run() {
             );
         }
 
-        ShowWindow(hwnd, SW_SHOW);
+        let maximized = responsive::restore_window(hwnd, &ui);
+        responsive::apply(hwnd, &ui);
+        ShowWindow(hwnd, if maximized { SW_SHOWMAXIMIZED } else { SW_SHOW });
         UpdateWindow(hwnd);
         let mut msg: MSG = std::mem::zeroed();
         while GetMessageW(&mut msg, null_mut(), 0, 0) > 0 {
@@ -700,6 +774,9 @@ pub fn run() {
             UnhookWindowsHookEx(keyboard_hook);
         }
         ui.worker.shutdown();
+        if !ui.scaled_font.get().is_null() {
+            DeleteObject(ui.scaled_font.get());
+        }
         DeleteObject(font);
         if !mutex.is_null() {
             CloseHandle(mutex);

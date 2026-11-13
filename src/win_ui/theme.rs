@@ -168,7 +168,7 @@ pub unsafe fn build(hwnd: HWND, s: &mut Ui) {
             null(),
         );
     }
-    for (i, t) in ["Çok renk", "Tek renk", "İki renk"].iter().enumerate() {
+    for (i, t) in ["Gökkuşağı", "Tek renk", "İki renk"].iter().enumerate() {
         btn(
             hwnd,
             s,
@@ -231,6 +231,20 @@ pub unsafe fn build(hwnd: HWND, s: &mut Ui) {
     if s.preview {
         text(GetDlgItem(hwnd, CONNECT), "USB kapalı");
     }
+    btn(
+        hwnd,
+        s,
+        AUTOSTART,
+        if s.autostart.get() {
+            "Windows ile başlat · Açık"
+        } else {
+            "Windows ile başlat · Kapalı"
+        },
+        790,
+        804,
+        310,
+        40,
+    );
     refresh_library(hwnd, s);
     mode_controls(hwnd, s);
     sync_actions(hwnd, s);
@@ -376,8 +390,9 @@ unsafe fn button_contents(s: &Ui, d: &DRAWITEMSTRUCT) {
     } else {
         None
     };
-    let selected =
-        idx == Some(settings.effect) || (palette && settings.palette == (id - 600) as usize);
+    let selected = idx == Some(settings.effect)
+        || (palette && settings.palette == (id - 600) as usize)
+        || (id == AUTOSTART && s.autostart.get());
     let disabled = d.itemState & ODS_DISABLED != 0;
     let pressed = d.itemState & ODS_SELECTED != 0;
     let focused = d.itemState & ODS_FOCUS != 0;
@@ -400,7 +415,13 @@ unsafe fn button_contents(s: &Ui, d: &DRAWITEMSTRUCT) {
     };
     // Paint the entire owner-draw surface so rounded corners blend cleanly.
     let brush = CreateSolidBrush(
-        if effect || palette || matches!(id, FIRST | SECOND | PREVIOUS | NEXT | CATEGORY_FILTER) {
+        if effect
+            || palette
+            || matches!(
+                id,
+                FIRST | SECOND | PREVIOUS | NEXT | CATEGORY_FILTER | AUTOSTART
+            )
+        {
             PANEL
         } else {
             BG
@@ -439,6 +460,15 @@ unsafe fn button_contents(s: &Ui, d: &DRAWITEMSTRUCT) {
         WHITE
     };
     if let Some(idx) = idx {
+        let scale = (s.font_px.get() as f32 / 16.).max(1.);
+        let thumb_w = (w - 24).max(1);
+        let thumb_h = (thumb_w as f32 * 48. / 200.).round() as i32;
+        let saved = SaveDC(dc);
+        SetMapMode(dc, MM_ANISOTROPIC);
+        SetWindowExtEx(dc, 200, 48, null_mut());
+        SetViewportExtEx(dc, thumb_w, thumb_h, null_mut());
+        SetWindowOrgEx(dc, 10, 8, null_mut());
+        SetViewportOrgEx(dc, 12, 10, null_mut());
         thumbnail(
             dc,
             idx,
@@ -447,56 +477,71 @@ unsafe fn button_contents(s: &Ui, d: &DRAWITEMSTRUCT) {
             hovered,
             s.started.elapsed().as_secs_f32(),
         );
+        RestoreDC(dc, saved);
+        let title_y = thumb_h + 20;
+        let title_size = (14. * scale).round() as i32;
         label(
             dc,
             &title,
             12,
-            60,
-            if title.chars().count() > 23 { 12 } else { 14 },
+            title_y,
+            if title.chars().count() > 23 {
+                title_size - 2
+            } else {
+                title_size
+            },
             color,
             true,
         );
-        {
-            let font = CreateFontW(
-                -10,
-                0,
-                0,
-                0,
-                400,
-                0,
-                0,
-                0,
-                DEFAULT_CHARSET as u32,
-                0,
-                0,
-                CLEARTYPE_QUALITY as u32,
-                0,
-                wide("Segoe UI").as_ptr(),
-            );
-            let old = SelectObject(dc, font);
-            SetTextColor(dc, MUTED);
-            let mut r = RECT {
-                left: 12,
-                top: 80,
-                right: w - 10,
-                bottom: 96,
-            };
-            let t = wide(lighting::DESCRIPTIONS[idx]);
-            DrawTextW(dc, t.as_ptr(), -1, &mut r, DT_SINGLELINE | DT_END_ELLIPSIS);
-            SelectObject(dc, old);
-            DeleteObject(font);
-        }
+        let font = CreateFontW(
+            -(11. * scale).round() as i32,
+            0,
+            0,
+            0,
+            400,
+            0,
+            0,
+            0,
+            DEFAULT_CHARSET as u32,
+            0,
+            0,
+            CLEARTYPE_QUALITY as u32,
+            0,
+            wide("Segoe UI").as_ptr(),
+        );
+        let old = SelectObject(dc, font);
+        SetTextColor(dc, MUTED);
+        let mut rr = RECT {
+            left: 12,
+            top: title_y + title_size + 6,
+            right: w - 12,
+            bottom: h - 8,
+        };
+        let t = wide(lighting::DESCRIPTIONS[idx]);
+        DrawTextW(dc, t.as_ptr(), -1, &mut rr, DT_WORDBREAK | DT_END_ELLIPSIS);
+        SelectObject(dc, old);
+        DeleteObject(font);
         if selected {
-            rect(dc, w - 14, 64, 5, 5, LIME, LIME, 5);
+            rect(dc, w - 16, title_y + 5, 5, 5, LIME, LIME, 5);
         }
     } else if id == FIRST || id == SECOND {
+        let saved = SaveDC(dc);
+        SetMapMode(dc, MM_ANISOTROPIC);
+        SetWindowExtEx(dc, 150, 36, null_mut());
+        SetViewportExtEx(dc, w, h, null_mut());
         let c = if id == FIRST {
             settings.first
         } else {
             settings.second
         };
         rect(dc, 11, 10, 16, 16, rgb(c), rgb(c), 5);
-        label(dc, &title, 37, 9, 13, color, false);
+        let caption = if settings.palette == 2 && settings.effect != 9 {
+            format!("{} · {}", if id == FIRST { "1" } else { "2" }, title)
+        } else {
+            format!("Seç · {}", title)
+        };
+        label(dc, &caption, 37, 9, 12, color, false);
+        RestoreDC(dc, saved);
     } else {
         let mut rr = RECT {
             left: 6,
@@ -504,7 +549,14 @@ unsafe fn button_contents(s: &Ui, d: &DRAWITEMSTRUCT) {
             right: w - 6,
             bottom: h,
         };
-        SelectObject(dc, s.font);
+        SelectObject(
+            dc,
+            if !primary && !s.scaled_font.get().is_null() {
+                s.scaled_font.get()
+            } else {
+                s.font
+            },
+        );
         SetBkMode(dc, TRANSPARENT as i32);
         SetTextColor(dc, color);
         let t = wide(&title);
@@ -518,12 +570,14 @@ unsafe fn button_contents(s: &Ui, d: &DRAWITEMSTRUCT) {
     }
 }
 pub unsafe fn paint(hwnd: HWND, s: &Ui) {
+    let l = super::responsive::current(hwnd, s);
     let mut ps: PAINTSTRUCT = std::mem::zeroed();
     let target = BeginPaint(hwnd, &mut ps);
     let dc = CreateCompatibleDC(target);
-    let bitmap = CreateCompatibleBitmap(target, 1160, 834);
+    let bitmap = CreateCompatibleBitmap(target, l.w, l.h);
     let old = SelectObject(dc, bitmap);
-    rect(dc, 0, 0, 1160, 834, BG, BG, 0);
+    rect(dc, 0, 0, l.w, l.h, BG, BG, 0);
+    SetViewportOrgEx(dc, 0, -l.scroll, null_mut());
     DrawIconEx(
         dc,
         27,
@@ -558,33 +612,12 @@ pub unsafe fn paint(hwnd: HWND, s: &Ui) {
             },
         )
     };
-    let badge = if s.preview {
-        "Önizleme"
-    } else if running {
-        "Efekt çalışıyor"
-    } else if connected {
-        "USB ile bağlı"
-    } else {
-        "Bağlantı bekleniyor"
-    };
+    let (bx, by) = if l.narrow { (24, 118) } else { (l.w - 534, 42) };
+    rect(dc, bx, by, 206, 30, PANEL, LINE, 14);
     rect(
         dc,
-        626,
-        42,
-        206,
-        30,
-        if connected && !s.preview {
-            0x1b241c
-        } else {
-            PANEL
-        },
-        LINE,
-        14,
-    );
-    rect(
-        dc,
-        640,
-        54,
+        bx + 14,
+        by + 12,
         5,
         5,
         if running { LIME } else { MUTED },
@@ -593,40 +626,42 @@ pub unsafe fn paint(hwnd: HWND, s: &Ui) {
     );
     label(
         dc,
-        badge,
-        654,
-        47,
-        12,
-        if connected { LIME } else { MUTED },
-        false,
-    );
-    rect(dc, 24, 112, 1112, 352, PANEL, LINE, 22);
-    label(dc, "Senin klavyen, senin ritmin.", 48, 131, 23, WHITE, true);
-    label(
-        dc,
-        if s.preview && lighting::reactive(s.worker.settings.lock().unwrap().effect) {
-            "Tepkiyi görmek için klavyeye tıklayın."
+        if s.preview {
+            "Önizleme"
+        } else if running {
+            "Efekt çalışıyor"
+        } else if connected {
+            "USB ile bağlı"
         } else {
-            "Her tuşta bir hareket, her harekette senin rengin."
+            "Bağlantı bekleniyor"
         },
-        450,
-        138,
+        bx + 28,
+        by + 5,
         12,
         MUTED,
         false,
     );
+    let a = l.hero;
+    rect(dc, a.x, a.y, a.w, a.h, PANEL, LINE, 22);
+    label(
+        dc,
+        "Senin klavyen, senin ritmin.",
+        a.x + 24,
+        a.y + 17,
+        if l.narrow { 19 } else { 23 },
+        WHITE,
+        true,
+    );
     let settings = s.worker.settings.lock().unwrap().clone();
-    rect(dc, 946, 136, 164, 30, 0x203024, 0x203024, 14);
+    let badge_w = if l.narrow { 160 } else { 184 };
+    let badge_x = a.x + a.w - badge_w - 20;
+    rect(dc, badge_x, a.y + 18, badge_w, 28, 0x203024, 0x203024, 12);
     label(
         dc,
         EFFECTS[settings.effect],
-        958,
-        141,
-        if EFFECTS[settings.effect].chars().count() > 22 {
-            10
-        } else {
-            12
-        },
+        badge_x + 10,
+        a.y + 23,
+        11,
         LIME,
         false,
     );
@@ -645,54 +680,75 @@ pub unsafe fn paint(hwnd: HWND, s: &Ui) {
         presses.retain(|p| t - p.time < 11.);
         frame = lighting::render_live(&settings, t * settings.speed, t, &presses, &input);
     }
+
+    let k = l.keyboard;
+    let saved = SaveDC(dc);
+    SetMapMode(dc, MM_ANISOTROPIC);
+    SetWindowExtEx(dc, 1016, 280, null_mut());
+    SetViewportExtEx(dc, k.w, k.h, null_mut());
+    SetWindowOrgEx(dc, 64, 170, null_mut());
+    SetViewportOrgEx(dc, k.x, k.y - l.scroll, null_mut());
     super::keyboard::paint(dc, &frame, settings.effect == 64);
-    rect(dc, 24, 484, 724, 316, PANEL, LINE, 20);
-    rect(dc, 764, 484, 372, 316, PANEL, LINE, 20);
-    label(dc, "Efekt kütüphanesi", 40, 502, 20, WHITE, true);
-    {
-        let lib = s.library.borrow();
-        rect(dc, 224, 504, 30, 22, 0x222820, 0x222820, 8);
-        label(
-            dc,
-            &lib.filtered.len().to_string(),
-            231,
-            507,
-            11,
-            LIME,
-            true,
-        );
-        label(
-            dc,
-            &format!(
-                "Sayfa {} / {}  ·  Önizleme için üzerine gel",
-                lib.page + 1,
-                lib.pages()
-            ),
-            237,
-            773,
-            11,
-            MUTED,
-            false,
-        );
-        if lib.filtered.is_empty() {
-            label(dc, "Eşleşen efekt yok", 250, 631, 21, WHITE, true);
-            label(
-                dc,
-                "Başka bir ad veya kategori deneyin.",
-                233,
-                662,
-                13,
-                MUTED,
-                false,
-            );
-        }
-    }
+    RestoreDC(dc, saved);
+    let q = |v: i32| (v as f32 * l.scale).round() as i32;
+    let a = l.library;
+    rect(dc, a.x, a.y, a.w, a.h, PANEL, LINE, 20);
+    label(
+        dc,
+        "Efekt kütüphanesi",
+        a.x + 16,
+        a.y + q(16),
+        q(20),
+        WHITE,
+        true,
+    );
+    let lib = s.library.borrow();
     rect(
         dc,
-        272,
-        500,
-        256,
-        34,
+        a.x + q(200),
+        a.y + q(18),
+        q(34),
+        q(22),
+        0x222820,
+        0x222820,
+        8,
+    );
+    label(
+        dc,
+        &lib.filtered.len().to_string(),
+        a.x + q(208),
+        a.y + q(21),
+        q(11),
+        LIME,
+        true,
+    );
+    label(
+        dc,
+        &format!("Sayfa {} / {}", lib.page + 1, lib.pages()),
+        a.x + a.w / 2 - q(32),
+        a.y + a.h - q(29),
+        q(12),
+        MUTED,
+        false,
+    );
+    if lib.filtered.is_empty() {
+        label(
+            dc,
+            "Eşleşen efekt yok",
+            a.x + 24,
+            a.y + q(116),
+            q(20),
+            WHITE,
+            true,
+        );
+    }
+    drop(lib);
+    rect(
+        dc,
+        a.x + q(16),
+        a.y + q(52),
+        a.w - q(244),
+        q(34),
         BG,
         if GetFocus() == GetDlgItem(hwnd, SEARCH) {
             LIME
@@ -701,17 +757,15 @@ pub unsafe fn paint(hwnd: HWND, s: &Ui) {
         },
         10,
     );
-    {
-        let old = SelectObject(dc, GetStockObject(NULL_BRUSH));
-        let p = CreatePen(PS_SOLID, 1, MUTED);
-        let op = SelectObject(dc, p);
-        Ellipse(dc, 282, 510, 291, 519);
-        MoveToEx(dc, 289, 517, null_mut());
-        LineTo(dc, 294, 522);
-        SelectObject(dc, op);
-        SelectObject(dc, old);
-        DeleteObject(p);
-    }
+    label(dc, "⌕", a.x + q(25), a.y + q(58), q(18), MUTED, false);
+    let a = l.settings;
+    rect(dc, a.x, a.y, a.w, a.h, PANEL, LINE, 20);
+    let saved = SaveDC(dc);
+    SetMapMode(dc, MM_ANISOTROPIC);
+    SetWindowExtEx(dc, 372, 316, null_mut());
+    SetViewportExtEx(dc, q(372), q(316), null_mut());
+    SetWindowOrgEx(dc, 764, 484, null_mut());
+    SetViewportOrgEx(dc, a.x + (a.w - q(372)) / 2, a.y - l.scroll, null_mut());
     label(dc, "Efekt ayarları", 790, 502, 20, WHITE, true);
     {
         let font = CreateFontW(
@@ -749,16 +803,52 @@ pub unsafe fn paint(hwnd: HWND, s: &Ui) {
         SelectObject(dc, old);
         DeleteObject(font);
     }
-    label(dc, "Renk düzeni", 790, 679, 12, MUTED, false);
-    line(dc, &[(24, 804), (1136, 804)], 0x20201f, 1);
-    // Clip child control areas to avoid flicker; WS_CLIPCHILDREN handles target rendering.
-    BitBlt(target, 0, 0, 1160, 834, dc, 0, 0, SRCCOPY);
+    label(dc, "Renk seçimi", 790, 679, 12, MUTED, false);
+    if matches!(settings.effect, 10 | 57 | 58) || (settings.palette == 0 && settings.effect != 9) {
+        label(
+            dc,
+            if settings.effect == 10 {
+                "Bu modda ışıklar kapalı."
+            } else if matches!(settings.effect, 57 | 58) {
+                "Renkler ekranından alınır."
+            } else {
+                "Renkler otomatik akar."
+            },
+            790,
+            753,
+            13,
+            MUTED,
+            false,
+        );
+    }
+
+    label(
+        dc,
+        if s.preview {
+            "Önizleme: Windows ayarı değişmez."
+        } else {
+            "Oturum açıldığında RS7 açılır."
+        },
+        790,
+        850,
+        11,
+        MUTED,
+        false,
+    );
+    RestoreDC(dc, saved);
+    line(
+        dc,
+        &[(24, l.content - 36), (l.w - 24, l.content - 36)],
+        0x20201f,
+        1,
+    );
+    SetViewportOrgEx(dc, 0, 0, null_mut());
+    BitBlt(target, 0, 0, l.w, l.h, dc, 0, 0, SRCCOPY);
     SelectObject(dc, old);
     DeleteObject(bitmap);
     DeleteDC(dc);
     EndPaint(hwnd, &ps);
 }
-
 pub unsafe fn slider(d: &NMCUSTOMDRAW) -> LRESULT {
     if d.hdr.code != NM_CUSTOMDRAW {
         return 0;
@@ -817,7 +907,7 @@ pub unsafe fn refresh_library(hwnd: HWND, s: &Ui) {
         lib.update(&String::from_utf16_lossy(&query[..n as usize]));
         (lib.visible().to_vec(), lib.page, lib.pages(), lib.category)
     };
-    for slot in 0..12 {
+    for slot in 0..crate::library::PAGE_SIZE {
         let h = GetDlgItem(hwnd, 400 + slot as i32);
         if let Some(&i) = visible.get(slot) {
             text(h, EFFECTS[i]);
@@ -839,13 +929,17 @@ pub unsafe fn refresh_library(hwnd: HWND, s: &Ui) {
 }
 
 pub unsafe fn mode_controls(hwnd: HWND, s: &Ui) {
-    let effect = s.worker.settings.lock().unwrap().effect;
+    let settings = s.worker.settings.lock().unwrap().clone();
+    let effect = settings.effect;
     let speed = !matches!(effect, 9 | 10 | 48 | 53 | 54 | 57 | 58 | 59 | 60 | 61);
     EnableWindow(GetDlgItem(hwnd, SPEED), speed as i32);
     let palette = !matches!(effect, 9 | 10 | 57 | 58);
     for id in 600..603 {
         EnableWindow(GetDlgItem(hwnd, id), palette as i32);
     }
-    EnableWindow(s.first, (!matches!(effect, 10 | 57 | 58)) as i32);
-    EnableWindow(s.second, palette as i32);
+    let custom = !matches!(effect, 10 | 57 | 58) && (effect == 9 || settings.palette != 0);
+    visibility(s.first, custom);
+    visibility(s.second, custom && effect != 9 && settings.palette == 2);
+    EnableWindow(s.first, custom as i32);
+    EnableWindow(s.second, (custom && settings.palette == 2) as i32);
 }

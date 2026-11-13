@@ -6,6 +6,7 @@ mod library;
 mod lighting;
 mod preferences;
 mod sources;
+mod startup;
 mod tray;
 mod win_ui;
 mod worker;

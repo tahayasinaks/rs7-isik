@@ -53,6 +53,7 @@ jobs:
           $name = "RS7-v$env:VERSION-Windows-x64.exe"
           Copy-Item target/release/rs7-isik.exe "release-artifacts/$name"
           Copy-Item docs/TEST-PLANI.md release-artifacts/TEST-PLANI.md
+          Copy-Item LICENSE release-artifacts/LICENSE.txt
           Get-ChildItem release-artifacts -File | Sort-Object Name | ForEach-Object {
             $hash = (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
             "$hash  $($_.Name)"

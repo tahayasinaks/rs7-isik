@@ -8,23 +8,25 @@ ATK RS7 Air için Türkçe, yerel Windows RGB uygulaması. Rust ile yazılmışt
 
 ## Kullanım
 
-1. Releases → **RS7-v1.1.2-Windows-x64.exe** dosyasını indirin. Kaynak ZIP'i veya eski Onizleme EXE'sini kullanmayın.
+1. Releases → **RS7-v1.1.3-Windows-x64.exe** dosyasını indirin. Kaynak ZIP'i veya eski Onizleme EXE'sini kullanmayın.
 2. Eski RS7 sürümünden tepsi simgesi → **Tamamen çık** ile çıkın; ATK HUB'ı kapatın.
 3. Klavyeyi USB ile bağlayın, uygulamada **Klavyeyi bağla** seçin.
 4. Bir efekt seçip **Başlat** seçin. Renk, hız ve parlaklık değişiklikleri çalışırken uygulanır.
 5. **X / küçült**: efekt sistem tepsisinde devam eder. **Tamamen çık**: akış kapanır, USB bırakılır.
 
-## v1.1.2 hotfix
+## v1.1.3 hotfix
 
-Efekt seçimi, küçük klavye önizlemeleri ve Türkçe açıklamalar içeren kartlara taşındı. Kartların üzerine gelince animasyon oynar; tıklayınca efekt seçilir. Çift tamponlu çizim, önbelleğe alınan tuş eşlemeleri ve yaklaşık 30 FPS yenileme ile önizleme çizimi iyileştirildi; üç saniyelik ani zaman sıfırlaması kaldırıldı.
+Pencere artık kenarlardan boyutlandırılabilir ve ekranı kaplayabilir. Geniş pencerede kartlar, önizlemeler, yazılar ve ayar kontrolleri orantılı büyür. Dar pencerede paneller alt alta, kartlar iki sütuna geçer; gerekli olduğunda dikey kaydırma açılır. Gerçek uygulama pencere boyutunu ve konumunu hatırlar.
 
-Yeni **Tuşla tsunami** modu, basılan tuştan karşı kenara tam boy dik bir dalga gönderir: sol taraftan sağa, sağ taraftan sola. Renk, hız ve parlaklık ayarlanabilir. Üst bölümdeki logo küçültülüp ortalandı; klavye ve ayar panellerinin yerleşimi korundu.
+Yeni koyu renk seçici; renk alanı, ton şeridi, HEX/RGB girişleri, önceki/yeni renk karşılaştırması ve hazır tonlar sunar. Beyaz köşeler temizlendi. Gökkuşağında renkler otomatik akar; tek renkte bir, iki renkte iki renk kutusu gösterilir.
+
+**Windows ile başlat** tercihi varsayılan olarak kapalıdır. Açarsanız kendi Windows oturumunuza girişte RS7 açılır; kapatırsanız başlangıç kaydı kaldırılır. Yönetici yetkisi gerekmez. Bu tercih uygulamayı açar; klavyeye bağlanma ve efekti başlatma elle yapılır. EXE'yi kalıcı bir klasörde tutun; taşıdıktan veya sürümü değiştirdikten sonra yeni dosyada tercihi kapatıp açın. Windows Başlangıç Uygulamaları üzerinden ayrıca devre dışı bırakılan kayıtların tekrar etkinleştirilmesi gerekebilir. Önizleme bu Windows ayarını değiştirmez.
 
 ## Özellikler
 
 - 66 Türkçe seçenek; görsel kartlar, arama, yedi kategori ve altışarlı sayfalama.
 - Dalga, deniz dalgası, kalp şekli, tuşa duyarlı desenler, doğal ve geometrik animasyonlar.
-- Çok renk, tek renk ve iki renk geçişi; %0–100 parlaklık ve 0.20×–3.00× hız. Tek renkli dalga ve geometrik desenler parlaklık geçişiyle hareketini korur.
+- Gökkuşağı, tek renk ve iki renk geçişi; %0–100 parlaklık ve 0.20×–3.00× hız. Tek renkli dalga ve geometrik desenler parlaklık geçişiyle hareketini korur.
 - Windows ses çıkışına tepki (mikrofon açılmaz), birincil ekran renkleri, işlemci/bellek yükü ve saat.
 - Üst barda duruma göre değişen bağlantı ve başlat/durdur düğmeleri.
 - Şeffaf logo, 81 tuşlu canlı çizim; #0b0b0c / #ffffff / #c6f432 paleti.
@@ -35,13 +37,13 @@ Bazı modlarda hız veya palet anlamlı değildir ve ilgili denetim pasiftir. Sa
 
 ## Doğrulama ve sınırlar
 
-24 otomatik Rust testi; efektlerin örnek çıktıları, parlaklık sınırı, tek renkte hareket, Türkçe arama, tuş/LED eşlemesi, USB paketleri, ayar kaydı ve gömülü logo yüklemesi için çalışır. Yerel Windows canlı kaynak entegrasyon testi ayrıca çalıştırılır; CI'da masaüstü/ses aygıtı gerektirdiği için varsayılan olarak atlanır.
+28 otomatik Rust testi; efektlerin örnek çıktıları, parlaklık sınırı, tek renkte hareket, Türkçe arama, tuş/LED eşlemesi, USB paketleri, ayar kaydı ve gömülü logo yüklemesi için çalışır. Yerel Windows canlı kaynak entegrasyon testi ayrıca çalıştırılır; CI'da masaüstü/ses aygıtı gerektirdiği için varsayılan olarak atlanır.
 
 Fiziksel test cihazı USB 373b:1220 / firmware 2.02 kullanan RS7 Air'dir. Önceki sürümlerde bağlantı, tam çıkış ve X ile tepside kesintisiz devam etme doğrulandı. Yeni 66 seçeneğin tümü gerçek cihazda tek tek doğrulanmış değildir; [test planıyla](docs/TEST-PLANI.md) kontrol edebilirsiniz. Diğer firmware varyantları henüz fiziksel test edilmedi.
 
 Animasyonlar bilgisayarda hesaplanır; tamamen çıkıştan sonra klavye firmware'ine özel efekt yüklenmiş olmaz. Fn algılanmaz; Windows tuş olayları kullanıldığından başka klavyeler de tepkiyi tetikleyebilir. Tuşlar, ses ve ekran örnekleri dosyaya/ağa yazılmaz. HDR, korumalı video veya özel ses kiplerinde canlı kaynak kısıtları olabilir; ayrıntılar katalogdadır.
 
-EXE dijital imzalı değildir. Proje ATK ile bağlantılı resmî bir ürün değildir.
+EXE dijital imzalı değildir; Windows Akıllı Uygulama Denetimi bazı bilgisayarlarda çalışmasını engelleyebilir. Bu hotfix imzalama sorununu çözmez. Açık kaynak lisansı kod imzasının yerini tutmaz. Proje [MIT lisanslıdır](LICENSE) ve ATK ile bağlantılı resmî bir ürün değildir.
 
 ## Derleme
 
@@ -60,4 +62,4 @@ Kaynak: src/lighting.rs ve src/lighting/extended.rs efektler; src/hardware.rs HI
 
 ## Yayınlar
 
-Sürüm sırası v1.0.0 → v1.0.1 → v1.1.0 → v1.1.1 → **v1.1.2**. Her yayın EXE, SHA-256, Türkçe notlar ve kaynak etiketi içerir. [Yayınlama kılavuzu](docs/YAYINLAMA.md).
+Sürüm sırası v1.0.0 → v1.0.1 → v1.1.0 → v1.1.1 → v1.1.2 → **v1.1.3**. Her yayın EXE, SHA-256, Türkçe notlar ve kaynak etiketi içerir. [Yayınlama kılavuzu](docs/YAYINLAMA.md).
