@@ -22,8 +22,9 @@ jobs:
             if ($LASTEXITCODE -ne 0) { throw 'NSIS could not be installed' }
           }
           New-Item -ItemType Directory -Force artifacts | Out-Null
+          $quad = ($version -split '-')[0] + '.0'
           $setup = Join-Path $PWD "artifacts/RS7-Light-v$version-Setup-x64.exe"
-          & 'C:/Program Files (x86)/NSIS/makensis.exe' "/DVERSION=$version" "/DOUTPUT=$setup" installer/RS7Light.nsi
+          & 'C:/Program Files (x86)/NSIS/makensis.exe' "/DVERSION=$version" "/DVERSION_QUAD=$quad" "/DOUTPUT=$setup" installer/RS7Light.nsi
           if ($LASTEXITCODE -ne 0) { throw 'Setup compilation failed' }
           $testDir = Join-Path $env:RUNNER_TEMP 'RS7-Light-Setup-Smoke'
           $process = Start-Process -FilePath $setup -ArgumentList @('/S','/TESTMODE',"/D=$testDir") -Wait -PassThru

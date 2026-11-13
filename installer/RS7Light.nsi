@@ -17,7 +17,10 @@ InstallDir "$LOCALAPPDATA\Programs\RS7 Light"
 RequestExecutionLevel user
 SetCompressor /SOLID lzma
 BrandingText "RS7 Light"
-VIProductVersion "1.2.0.0"
+!ifndef VERSION_QUAD
+!define VERSION_QUAD "1.2.0.0"
+!endif
+VIProductVersion "${VERSION_QUAD}"
 VIAddVersionKey /LANG=1055 "ProductName" "RS7 Light"
 VIAddVersionKey /LANG=1055 "FileDescription" "RS7 Light Kurulumu"
 VIAddVersionKey /LANG=1055 "FileVersion" "${VERSION}"

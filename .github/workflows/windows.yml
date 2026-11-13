@@ -56,7 +56,7 @@ jobs:
           }
           New-Item -ItemType Directory -Force release-artifacts | Out-Null
           $output = Join-Path $PWD "release-artifacts/RS7-Light-v$env:VERSION-Setup-x64.exe"
-          & 'C:/Program Files (x86)/NSIS/makensis.exe' "/DVERSION=$env:VERSION" "/DOUTPUT=$output" installer/RS7Light.nsi
+          & 'C:/Program Files (x86)/NSIS/makensis.exe' "/DVERSION=$env:VERSION" "/DVERSION_QUAD=$($env:VERSION).0" "/DOUTPUT=$output" installer/RS7Light.nsi
           if ($LASTEXITCODE -ne 0) { throw 'Setup derlenemedi.' }
       - name: Yayın dosyalarını hazırla
         shell: pwsh
