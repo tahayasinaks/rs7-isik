@@ -1,6 +1,6 @@
-# RS7 Light v1.2.1 — kullanıcı test planı
+# RS7 Light v1.2.2 — kullanıcı test planı
 
-İndirilecek dosya: RS7-Light-v1.2.1-Setup-x64.exe. Eski RS7 sürümünden tepsi menüsü → Tamamen çık ile çıkın; ATK HUB kapalı, klavye USB ile bağlı olsun.
+İndirilecek dosya: RS7-Light-v1.2.2-Setup-x64.exe. Eski RS7 sürümünden tepsi menüsü → Tamamen çık ile çıkın; ATK HUB kapalı, klavye USB ile bağlı olsun.
 
 | Kontrol | Beklenen sonuç |
 |---|---|
@@ -8,10 +8,12 @@
 | Dar pencere / kaydırma | Paneller alt alta, kartlar iki sütuna geçer; bütün kontroller kaydırmayla ulaşılabilir olur. |
 | Renk kutusu → ton şeridi / HEX / RGB → Uygula | Yeni renk kutuya uygulanır. Vazgeç veya X önceki rengi korur; geçersiz giriş Uygula'yı kapatır. |
 | Gökkuşağı / Tek renk / İki renk | Sırasıyla otomatik renk açıklaması / bir renk kutusu / iki renk kutusu görünür. |
-| Windows ile başlat → Açık → oturumu kapatıp aç | RS7 Light son seçili ayarlarla otomatik bağlanır ve efekti başlatır; aygıt geç hazır olursa yeniden dener. |
+| Windows ile başlat → Açık → oturumu kapatıp aç | Ana pencere açılmaz, uygulama tepside çalışır. RS7 Light son seçili ayarlarla otomatik bağlanır ve efekti başlatır; aygıt geç hazır olursa yeniden dener. |
 | Windows ile başlat → Kapalı → oturumu kapatıp aç | RS7 otomatik açılmaz. Sürüm dosyası taşındığında yeni konumda tercihi kapatıp açın. |
 | Tamamen çık → yeniden aç: pencere | Boyut/konum geri gelir; kaybolan monitör varsa görünür alana uyarlanır. |
-| Güncelleme bildirimi → İndir ve kur | Daha yeni kararlı sürüm varsa setup doğrulanır, uygulama kapanır, aynı kurulum klasörüne güncelleme yapılır; ayarlar korunur. |
+| Güncelleme bildirimi → Güncelle | Daha yeni kararlı sürüm varsa setup doğrulanır, uygulama kapanır, aynı kurulum klasörüne güncelleme yapılır; ayarlar korunur. |
+| Güncelleme bildirimi → Daha sonra | Bildirim kapanır; ışıklar çalışır. Aynı sürüm o oturumda tekrar bildirilmez; sonraki açılışta tekrar sunulur. |
+| Tepsi simgesi → Aç | Kaydedilen boyut ve konumla pencere açılır. |
 | Klavyeyi bağla → Başlat | Üstte USB/çalışma durumu görünür; klavye ışıkları seçilen efekte geçer. |
 | Sabit renk → ilk renk kırmızı / yeşil / mavi | Klavye sırasıyla seçilen renkte yanar. Bu modda ikinci renk ve hız pasiftir. |
 | Parlaklık %0 → %30 → %100 | Işıklar söner; sonra kısık ve tam parlaklıkta yanar. |

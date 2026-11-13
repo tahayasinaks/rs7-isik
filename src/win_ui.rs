@@ -3,6 +3,7 @@ mod color_picker;
 mod keyboard;
 mod responsive;
 mod theme;
+mod update_notice;
 use crate::{
     lighting::{self, EFFECTS},
     tray,
@@ -64,6 +65,7 @@ struct Ui {
     updates: crate::updates::Shared,
     update_caption: RefCell<String>,
     notified_version: RefCell<String>,
+    last_update_check: std::cell::Cell<Instant>,
     saved_settings: RefCell<lighting::Settings>,
     pending_settings: RefCell<Option<(lighting::Settings, Instant)>>,
 }
@@ -269,7 +271,19 @@ unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, w: WPARAM, l: LPARAM) ->
         }
 
         tray::SHOW => {
-            ShowWindow(hwnd, SW_RESTORE);
+            if IsWindowVisible(hwnd) == 0 {
+                let maximized = responsive::restore_window(hwnd, state);
+                ShowWindow(
+                    hwnd,
+                    if maximized {
+                        SW_SHOWMAXIMIZED
+                    } else {
+                        SW_RESTORE
+                    },
+                );
+            } else {
+                ShowWindow(hwnd, SW_RESTORE);
+            }
             SetForegroundWindow(hwnd);
             0
         }
@@ -311,12 +325,7 @@ unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, w: WPARAM, l: LPARAM) ->
             let id = (w & 0xffff) as i32;
             if id == UPDATE {
                 if state.preview {
-                    MessageBoxW(
-                        hwnd,
-                        wide("Önizlemede indirme veya kurulum yapılmaz.").as_ptr(),
-                        wide("RS7 Light · Güncelleme").as_ptr(),
-                        MB_OK,
-                    );
+                    update_notice::show(hwnd, "1.2.2 (örnek)", true, state.font);
                     return 0;
                 }
                 let value = state.updates.lock().unwrap().clone();
@@ -325,6 +334,7 @@ unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, w: WPARAM, l: LPARAM) ->
                         crate::updates::download(state.updates.clone(), r)
                     }
                     crate::updates::State::Current | crate::updates::State::Error(_) => {
+                        state.last_update_check.set(Instant::now());
                         crate::updates::check(state.updates.clone())
                     }
                     _ => {}
@@ -628,6 +638,7 @@ pub fn run() {
                 p.file_stem()
                     .is_some_and(|n| n.to_string_lossy().contains("Onizleme"))
             });
+        let background = !preview && std::env::args().any(|a| a == "--autostart");
         let preview_class = format!("RS7DesignPreview.{}", env!("CARGO_PKG_VERSION"));
         let preview_mutex = format!("Local\\RS7.DesignPreview.{}", env!("CARGO_PKG_VERSION"));
         let class_name = if preview {
@@ -647,7 +658,7 @@ pub fn run() {
         );
         if !mutex.is_null() && GetLastError() == ERROR_ALREADY_EXISTS {
             let existing = FindWindowW(wide(class_name).as_ptr(), null());
-            if !existing.is_null() {
+            if !existing.is_null() && !background {
                 PostMessageW(existing, tray::SHOW, 0, 0);
             }
             CloseHandle(mutex);
@@ -702,6 +713,7 @@ pub fn run() {
             })),
             update_caption: RefCell::new(String::new()),
             notified_version: RefCell::new(String::new()),
+            last_update_check: std::cell::Cell::new(Instant::now()),
             worker,
             preview,
             started: Instant::now(),
@@ -805,9 +817,16 @@ pub fn run() {
             }
             crate::updates::check(ui.updates.clone());
         }
-        let maximized = responsive::restore_window(hwnd, &ui);
-        responsive::apply(hwnd, &ui);
-        ShowWindow(hwnd, if maximized { SW_SHOWMAXIMIZED } else { SW_SHOW });
+        if background {
+            responsive::apply(hwnd, &ui);
+            if !ui.tray.borrow().as_ref().is_some_and(|t| t.available) {
+                ShowWindow(hwnd, SW_SHOWMINNOACTIVE);
+            }
+        } else {
+            let maximized = responsive::restore_window(hwnd, &ui);
+            responsive::apply(hwnd, &ui);
+            ShowWindow(hwnd, if maximized { SW_SHOWMAXIMIZED } else { SW_SHOW });
+        }
         UpdateWindow(hwnd);
         let mut msg: MSG = std::mem::zeroed();
         while GetMessageW(&mut msg, null_mut(), 0, 0) > 0 {
@@ -856,11 +875,24 @@ fn persist_changes(s: &Ui) {
 }
 unsafe fn update_ui(hwnd: HWND, s: &Ui) {
     use crate::updates::State;
+    if !s.preview && s.last_update_check.get().elapsed() >= std::time::Duration::from_secs(15 * 60)
+    {
+        let busy = matches!(
+            *s.updates.lock().unwrap(),
+            State::Checking | State::Downloading(_) | State::Ready(_) | State::Installing
+        );
+        if !busy {
+            s.last_update_check.set(Instant::now());
+            crate::updates::check(s.updates.clone());
+        }
+    }
     let value = s.updates.lock().unwrap().clone();
     if let State::Available(r) = &value {
         if !s.preview && *s.notified_version.borrow() != r.version {
             *s.notified_version.borrow_mut() = r.version.clone();
-            if MessageBoxW(hwnd,wide(&format!("RS7 Light v{} sürümü hazır.\n\nKurulum dosyası indirilip doğrulanacak. Ayarların korunarak güncellenecek. Şimdi indir ve kur?",r.version)).as_ptr(),wide("RS7 Light · Güncelleme mevcut").as_ptr(),MB_YESNO|MB_ICONINFORMATION)==IDYES {crate::updates::download(s.updates.clone(),r.clone());}
+            if update_notice::show(hwnd, &r.version, false, s.font) {
+                crate::updates::download(s.updates.clone(), r.clone());
+            }
         }
     }
     let (caption, enabled) = match &value {

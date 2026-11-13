@@ -3,7 +3,7 @@
 !include "FileFunc.nsh"
 !include "LogicLib.nsh"
 !ifndef VERSION
-!define VERSION "1.2.1"
+!define VERSION "1.2.2"
 !endif
 !ifndef APP_EXE
 !define APP_EXE "..\target\release\rs7-isik.exe"
@@ -18,7 +18,7 @@ RequestExecutionLevel user
 SetCompressor /SOLID lzma
 BrandingText "RS7 Light"
 !ifndef VERSION_QUAD
-!define VERSION_QUAD "1.2.1.0"
+!define VERSION_QUAD "1.2.2.0"
 !endif
 VIProductVersion "${VERSION_QUAD}"
 VIAddVersionKey /LANG=1055 "ProductName" "RS7 Light"

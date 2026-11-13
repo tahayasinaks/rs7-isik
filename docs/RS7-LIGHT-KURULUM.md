@@ -1,6 +1,6 @@
 # RS7 Light — Kurulum ve güncelleme
 
-RS7-Light-v1.2.1-Setup-x64.exe kurulum paketidir; eski RS7'yi sistem tepsisi menüsünden Tamamen çık ile kapattıktan sonra açın. Kurulum kullanıcı hesabınıza yapılır; yönetici yetkisi gerektirmez. Başlat menüsü, masaüstü kısayolu ve kaldırıcı eklenir. Eski ışık/pencere ayarları korunur.
+RS7-Light-v1.2.2-Setup-x64.exe kurulum paketidir; eski RS7'yi sistem tepsisi menüsünden Tamamen çık ile kapattıktan sonra açın. Kurulum kullanıcı hesabınıza yapılır; yönetici yetkisi gerektirmez. Başlat menüsü, masaüstü kısayolu ve kaldırıcı eklenir. Eski ışık/pencere ayarları korunur.
 
 ## Otomatik başlatma
 
@@ -10,9 +10,11 @@ Ayar değişiklikleri 750 ms durulduktan sonra kaydedilir; tam çıkışta da ka
 
 ## Güncelleme akışı
 
-Uygulama açılırken arka planda yalnızca projenin GitHub Releases en son kararlı sürümü kontrol edilir. Sürüm numarası mevcut sürümden büyük olmalıdır; eski/farklı sürümler güncelleme sayılmaz. Taslak ve önizleme yayınları alınmaz. Aynı sürümdeki hotfix için yeni bir sürüm numarası yayımlanmalıdır.
+Windows oturum açılışında uygulama pencere göstermeden sistem tepsisinde çalışır. Elle açıldığında normal pencere gösterilir.
 
-Yeni sürüm bulunduğunda bildirim ve İndir ve kur seçeneği sunulur. İndirme onayınızdan önce başlamaz. İnternet kesilmesi uygulamayı veya ışık akışını durdurmaz; tekrar deneme düğmesi vardır.
+Açılışta ve ardından 15 dakikada bir arka planda yalnızca projenin GitHub Releases en son kararlı sürümü kontrol edilir. Sürüm numarası mevcut sürümden büyük olmalıdır; eski/farklı sürümler güncelleme sayılmaz. Taslak ve önizleme yayınları alınmaz. Aynı sürümdeki hotfix için yeni bir sürüm numarası yayımlanmalıdır.
+
+Yeni sürüm bulunduğunda Güncelle / Daha sonra seçenekli bildirim gösterilir. Daha sonra, o sürümün bildirimini uygulama yeniden açılana kadar erteler; ayar panelindeki indirme düğmesi kullanılabilir kalır. İndirme onayınızdan önce başlamaz. İnternet kesilmesi uygulamayı veya ışık akışını durdurmaz; tekrar deneme düğmesi vardır.
 
 Kurulum dosyası adı RS7-Light-vX.Y.Z-Setup-x64.exe olmalıdır. Beklenen GitHub deposu/adresi, dosya boyutu, API SHA-256 özeti ve SHA256SUMS.txt eşleştirilir. Dosya tamamen indirilip aynı özetle doğrulanmadan çalıştırılmaz. Doğrulamadan sonra ayarlar kaydedilir, setup açılır; setup uygulama sürecinin kapanmasını bekler, aynı kurulum klasöründe dosyayı yeniler. Başlangıç tercihi korunur. Kurulum sonunda uygulamayı açma seçeneği vardır.
 

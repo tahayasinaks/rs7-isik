@@ -6,7 +6,11 @@ ATK RS7 Air için Türkçe, yerel Windows RGB uygulaması. Rust ile yazılmışt
 
 ![RS7 arayüzü](docs/images/rs7.png)
 
-## v1.2.1 hotfix
+## v1.2.2 hotfix
+
+Windows oturum açılışında RS7 Light pencere göstermeden sistem tepsisinde başlar; son ayarlarla ışıklar çalışmaya devam eder. Elle açıldığında normal pencere gösterilir. Yeni sürüm açılışta ve 15 dakikada bir kontrol edilir; bulununca **Güncelle / Daha sonra** bildiriminde sunulur. Ertelenen aynı sürüm o oturumda tekrar bildirilmez.
+
+## v1.2.1 değişiklikleri
 
 Kategori açılır menüsü koyu temaya uyarlandı. Yeşil seçili kategori işareti, satır vurgusu, ölçeğe uyumlu yazılar ve klavyeyle seçim eklendi. Menü ekranın uygun tarafında açılır; dışarı tıklama veya Esc ile kapanır.
 
@@ -22,11 +26,11 @@ Açılışta daha yeni kararlı GitHub sürümü kontrol edilir. Yeni sürümde 
 
 ## Kullanım
 
-1. Releases → **RS7-Light-v1.2.1-Setup-x64.exe** dosyasını indir. Eski RS7'den tepsi menüsü → **Tamamen çık** ile çık, ardından setup'ı aç.
+1. Releases → **RS7-Light-v1.2.2-Setup-x64.exe** dosyasını indir. Eski RS7'den tepsi menüsü → **Tamamen çık** ile çık, ardından setup'ı aç.
 2. Kurulumdan sonra **RS7 Light** kısayolunu aç; klavyeyi USB ile bağla ve ATK HUB'ı kapat.
 3. Otomatik açılış istemiyorsan **Klavyeyi bağla → Başlat** seç. Otomatik açılış istiyorsan **Windows ile başlat** tercihini aç; o anda ve sonraki açılışlarda son ayarlarla otomatik bağlanıp başlar.
 4. Efekt, renk, hız ve parlaklık çalışırken değiştirilebilir. **X / küçült** efekti tepside sürdürür; **Tamamen çık** USB'yi bırakır.
-5. Kurulumsuz kullanım için **RS7-Light-v1.2.1-Windows-x64.exe** seçeneği de vardır.
+5. Kurulumsuz kullanım için **RS7-Light-v1.2.2-Windows-x64.exe** seçeneği de vardır.
 
 ## Özellikler
 
@@ -68,4 +72,4 @@ Kaynak: src/lighting.rs ve src/lighting/extended.rs efektler; src/hardware.rs HI
 
 ## Yayınlar
 
-Sürüm sırası v1.0.0 → v1.0.1 → v1.1.0 → v1.1.1 → v1.1.2 → v1.1.3 → v1.2.0 → **v1.2.1**. Her yayın EXE, SHA-256, Türkçe notlar ve kaynak etiketi içerir. [Yayınlama kılavuzu](docs/YAYINLAMA.md).
+Sürüm sırası v1.0.0 → v1.0.1 → v1.1.0 → v1.1.1 → v1.1.2 → v1.1.3 → v1.2.0 → v1.2.1 → **v1.2.2**. Her yayın EXE, SHA-256, Türkçe notlar ve kaynak etiketi içerir. [Yayınlama kılavuzu](docs/YAYINLAMA.md).

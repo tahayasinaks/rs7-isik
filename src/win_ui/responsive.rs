@@ -311,7 +311,7 @@ fn window_path() -> Option<std::path::PathBuf> {
     })
 }
 pub unsafe fn save_window(hwnd: HWND, s: &Ui) {
-    if s.preview {
+    if s.preview || IsWindowVisible(hwnd) == 0 {
         return;
     }
     let Some(path) = window_path() else {
