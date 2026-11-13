@@ -1,6 +1,6 @@
-# RS7 Light v1.2.2 — kullanıcı test planı
+# RS7 Light v1.2.3 — kullanıcı test planı
 
-İndirilecek dosya: RS7-Light-v1.2.2-Setup-x64.exe. Eski RS7 sürümünden tepsi menüsü → Tamamen çık ile çıkın; ATK HUB kapalı, klavye USB ile bağlı olsun.
+İndirilecek dosya: RS7-Light-v1.2.3-Setup-x64.exe. Eski RS7 sürümünden tepsi menüsü → Tamamen çık ile çıkın; ATK HUB kapalı, klavye USB ile bağlı olsun.
 
 | Kontrol | Beklenen sonuç |
 |---|---|
@@ -14,6 +14,7 @@
 | Güncelleme bildirimi → Güncelle | Daha yeni kararlı sürüm varsa setup doğrulanır, uygulama kapanır, aynı kurulum klasörüne güncelleme yapılır; ayarlar korunur. |
 | Güncelleme bildirimi → Daha sonra | Bildirim kapanır; ışıklar çalışır. Aynı sürüm o oturumda tekrar bildirilmez; sonraki açılışta tekrar sunulur. |
 | Tepsi simgesi → Aç | Kaydedilen boyut ve konumla pencere açılır. |
+| Sağdaki kaydırma çubuğu | Koyu zemin, yuvarlatılmış tutma alanı; üzerine gelince ve sürüklerken yeşil vurgu. Sürükleme, tekerlek ve ok/PageUp/PageDown/Home/End ile kaydırma çalışır. |
 | Klavyeyi bağla → Başlat | Üstte USB/çalışma durumu görünür; klavye ışıkları seçilen efekte geçer. |
 | Sabit renk → ilk renk kırmızı / yeşil / mavi | Klavye sırasıyla seçilen renkte yanar. Bu modda ikinci renk ve hız pasiftir. |
 | Parlaklık %0 → %30 → %100 | Işıklar söner; sonra kısık ve tam parlaklıkta yanar. |
@@ -36,7 +37,7 @@ USB kablosunu çıkarıp tekrar takarsanız bağlantı hatası görünmelidir; y
 
 Sorun bildirirken: sürüm, seçilen efekt/palet, hız/parlaklık, beklenen ve görülen davranış, Windows sürümü ve uygulamadaki hata mesajını yazın. Modlar arasında fark olup olmadığını belirtin. Tuş/ses/ekran kaydı paylaşmanız gerekmez.
 
-Bu sürümde 31 otomatik test geçti; 1 canlı kaynak testi varsayılan olarak atlanır. Oturum açılışı, tüm Windows ölçekleme oranları ve bütün modların fiziksel cihaz testi henüz tamamlanmadı. EXE imzasızdır; Akıllı Uygulama Denetimi engeli bu sürümde devam edebilir.
+Bu sürümde 33 otomatik test geçti; 1 canlı kaynak testi varsayılan olarak atlanır. Oturum açılışı, tüm Windows ölçekleme oranları ve bütün modların fiziksel cihaz testi henüz tamamlanmadı. EXE imzasızdır; Akıllı Uygulama Denetimi engeli bu sürümde devam edebilir.
 
 
 Kurulum, aynı sürümü yeniden kurma ve kaldırma testleri Windows CI ortamında geçmiştir. Gerçek cihazla yeniden başlatma ve gelecekteki sürüme canlı güncelleme ayrıca doğrulanmalıdır.

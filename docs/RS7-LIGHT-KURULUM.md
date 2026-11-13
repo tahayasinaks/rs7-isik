@@ -1,6 +1,6 @@
 # RS7 Light — Kurulum ve güncelleme
 
-RS7-Light-v1.2.2-Setup-x64.exe kurulum paketidir; eski RS7'yi sistem tepsisi menüsünden Tamamen çık ile kapattıktan sonra açın. Kurulum kullanıcı hesabınıza yapılır; yönetici yetkisi gerektirmez. Başlat menüsü, masaüstü kısayolu ve kaldırıcı eklenir. Eski ışık/pencere ayarları korunur.
+RS7-Light-v1.2.3-Setup-x64.exe kurulum paketidir; eski RS7'yi sistem tepsisi menüsünden Tamamen çık ile kapattıktan sonra açın. Kurulum kullanıcı hesabınıza yapılır; yönetici yetkisi gerektirmez. Başlat menüsü, masaüstü kısayolu ve kaldırıcı eklenir. Eski ışık/pencere ayarları korunur.
 
 ## Otomatik başlatma
 

@@ -2,6 +2,7 @@ mod category_popup;
 mod color_picker;
 mod keyboard;
 mod responsive;
+mod scrollbar;
 mod theme;
 mod update_notice;
 use crate::{
@@ -61,6 +62,8 @@ struct Ui {
     preview_presses: RefCell<Vec<lighting::Press>>,
     hovered: std::cell::Cell<i32>,
     scroll: std::cell::Cell<i32>,
+    scroll_hover: std::cell::Cell<bool>,
+    scroll_drag: std::cell::Cell<Option<(i32, i32)>>,
     autostart: std::cell::Cell<bool>,
     updates: crate::updates::Shared,
     update_caption: RefCell<String>,
@@ -722,6 +725,8 @@ pub fn run() {
             preview_presses: RefCell::new(Vec::new()),
             hovered: std::cell::Cell::new(0),
             scroll: std::cell::Cell::new(0),
+            scroll_hover: std::cell::Cell::new(false),
+            scroll_drag: std::cell::Cell::new(None),
             autostart: std::cell::Cell::new(if preview {
                 false
             } else {
@@ -743,7 +748,7 @@ pub fn run() {
             0,
             class.as_ptr(),
             wide(crate::brand::NAME).as_ptr(),
-            WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_VSCROLL,
+            WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN,
             CW_USEDEFAULT,
             CW_USEDEFAULT,
             1176,

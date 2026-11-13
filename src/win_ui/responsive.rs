@@ -120,15 +120,6 @@ pub unsafe fn current(hwnd: HWND, s: &Ui) -> Layout {
 pub unsafe fn apply(hwnd: HWND, s: &Ui) {
     let l = current(hwnd, s);
     s.scroll.set(l.scroll);
-    let mut info: SCROLLINFO = std::mem::zeroed();
-    info.cbSize = std::mem::size_of::<SCROLLINFO>() as u32;
-    info.fMask = SIF_RANGE | SIF_PAGE | SIF_POS;
-    info.nMin = 0;
-    info.nMax = l.content - 1;
-    info.nPage = l.h as u32;
-    info.nPos = l.scroll;
-    SetScrollInfo(hwnd, SB_VERT, &info, 1);
-    let l = current(hwnd, s);
     let mov = |h: HWND, x, y, w, hgt| {
         MoveWindow(h, x, y - l.scroll, w, hgt, 0);
     };
@@ -255,6 +246,7 @@ pub unsafe fn apply(hwnd: HWND, s: &Ui) {
         q(40),
     );
     mov(s.status, 40, l.content - 30, l.w - 80, 22);
+    super::scrollbar::update(hwnd, s);
     RedrawWindow(hwnd, null(), null_mut(), RDW_INVALIDATE | RDW_ALLCHILDREN);
 }
 pub unsafe fn scroll(hwnd: HWND, s: &Ui, delta: i32) {

@@ -6,7 +6,11 @@ ATK RS7 Air için Türkçe, yerel Windows RGB uygulaması. Rust ile yazılmışt
 
 ![RS7 arayüzü](docs/images/rs7.png)
 
-## v1.2.2 hotfix
+## v1.2.3 hotfix
+
+Sağdaki beyaz Windows kaydırma çubuğu yerine koyu temalı, ince ve yuvarlatılmış özel çubuk eklendi. Üzerine gelince ve sürüklerken yeşil vurgulanır; sürükleme, tekerlek ve klavye ile kaydırma desteklenir. İçerik sığdığında gizlenir.
+
+## v1.2.2 değişiklikleri
 
 Windows oturum açılışında RS7 Light pencere göstermeden sistem tepsisinde başlar; son ayarlarla ışıklar çalışmaya devam eder. Elle açıldığında normal pencere gösterilir. Yeni sürüm açılışta ve 15 dakikada bir kontrol edilir; bulununca **Güncelle / Daha sonra** bildiriminde sunulur. Ertelenen aynı sürüm o oturumda tekrar bildirilmez.
 
@@ -26,11 +30,11 @@ Açılışta daha yeni kararlı GitHub sürümü kontrol edilir. Yeni sürümde 
 
 ## Kullanım
 
-1. Releases → **RS7-Light-v1.2.2-Setup-x64.exe** dosyasını indir. Eski RS7'den tepsi menüsü → **Tamamen çık** ile çık, ardından setup'ı aç.
+1. Releases → **RS7-Light-v1.2.3-Setup-x64.exe** dosyasını indir. Eski RS7'den tepsi menüsü → **Tamamen çık** ile çık, ardından setup'ı aç.
 2. Kurulumdan sonra **RS7 Light** kısayolunu aç; klavyeyi USB ile bağla ve ATK HUB'ı kapat.
 3. Otomatik açılış istemiyorsan **Klavyeyi bağla → Başlat** seç. Otomatik açılış istiyorsan **Windows ile başlat** tercihini aç; o anda ve sonraki açılışlarda son ayarlarla otomatik bağlanıp başlar.
 4. Efekt, renk, hız ve parlaklık çalışırken değiştirilebilir. **X / küçült** efekti tepside sürdürür; **Tamamen çık** USB'yi bırakır.
-5. Kurulumsuz kullanım için **RS7-Light-v1.2.2-Windows-x64.exe** seçeneği de vardır.
+5. Kurulumsuz kullanım için **RS7-Light-v1.2.3-Windows-x64.exe** seçeneği de vardır.
 
 ## Özellikler
 
@@ -47,7 +51,7 @@ Bazı modlarda hız veya palet anlamlı değildir ve ilgili denetim pasiftir. Sa
 
 ## Doğrulama ve sınırlar
 
-31 otomatik Rust testi; efektlerin örnek çıktıları, parlaklık sınırı, tek renkte hareket, Türkçe arama, tuş/LED eşlemesi, USB paketleri, ayar kaydı ve gömülü logo yüklemesi için çalışır. Yerel Windows canlı kaynak entegrasyon testi ayrıca çalıştırılır; CI'da masaüstü/ses aygıtı gerektirdiği için varsayılan olarak atlanır.
+33 otomatik Rust testi; efektlerin örnek çıktıları, parlaklık sınırı, tek renkte hareket, Türkçe arama, tuş/LED eşlemesi, USB paketleri, ayar kaydı ve gömülü logo yüklemesi için çalışır. Yerel Windows canlı kaynak entegrasyon testi ayrıca çalıştırılır; CI'da masaüstü/ses aygıtı gerektirdiği için varsayılan olarak atlanır.
 
 Fiziksel test cihazı USB 373b:1220 / firmware 2.02 kullanan RS7 Air'dir. Önceki sürümlerde bağlantı, tam çıkış ve X ile tepside kesintisiz devam etme doğrulandı. Yeni 66 seçeneğin tümü gerçek cihazda tek tek doğrulanmış değildir; [test planıyla](docs/TEST-PLANI.md) kontrol edebilirsiniz. Diğer firmware varyantları henüz fiziksel test edilmedi.
 
@@ -72,4 +76,4 @@ Kaynak: src/lighting.rs ve src/lighting/extended.rs efektler; src/hardware.rs HI
 
 ## Yayınlar
 
-Sürüm sırası v1.0.0 → v1.0.1 → v1.1.0 → v1.1.1 → v1.1.2 → v1.1.3 → v1.2.0 → v1.2.1 → **v1.2.2**. Her yayın EXE, SHA-256, Türkçe notlar ve kaynak etiketi içerir. [Yayınlama kılavuzu](docs/YAYINLAMA.md).
+Sürüm sırası v1.0.0 → v1.0.1 → v1.1.0 → v1.1.1 → v1.1.2 → v1.1.3 → v1.2.0 → v1.2.1 → v1.2.2 → **v1.2.3**. Her yayın EXE, SHA-256, Türkçe notlar ve kaynak etiketi içerir. [Yayınlama kılavuzu](docs/YAYINLAMA.md).
